@@ -1,0 +1,90 @@
+Run 101
+Time (UTC): 2026-09-23T22:26:10.247291Z
+Purpose: Can the joining relation compensate a local turn? And do two circulation senses survive an interaction?
+Working directory: scripts/composite
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/composite && cat > signs.py << 'EOF'
+import numpy as np
+from layer import *
+from coupled import build
+from circle_local import local_commutant
+EOF
+cat > circle_local.py << 'EOF'
+import numpy as np
+def local_commutant(J,S):
+    m=J.shape[0]; cols=[]
+    for i in S:
+        for j in S:
+            M=np.zeros((m,m)); M[:,j]+=J[:,i]; M[i,:]-=J[j,:]; cols.append(M.ravel())
+    A=np.array(cols).T; u,s,vt=np.linalg.svd(A,full_matrices=False); null=vt[s<1e-8*s[0]]
+    out=[]
+    for v in null:
+        M=np.zeros((m,m)); M[np.ix_(S,S)]=v.reshape(len(S),len(S)); out.append(M)
+    return out
+EOF
+cat >> signs.py << 'EOF'
+# (1) Can the joining relation compensate a turn of A alone?  Search every linear transformation acting on A's
+#     members, A's relations and the joining relation's memory that leaves a round of the joined system unchanged.
+for kind,N in (("pair",2),("triangle",3),("ring",8),("net",12)):
+    n,E,JT,JA,iA,iB,pa,m=build(kind,N,pick=0)
+    S=iA+[m-1]; basis=local_commutant(JT,S)
+    rng=np.random.default_rng(1); rotlike=0
+    for _ in range(500):
+        if not basis: break
+        M=sum(rng.normal()*B for B in basis); rotlike+=np.abs(np.linalg.eigvals(M).imag).max()>1e-8
+    print(f"joined {kind}s: transformations of A plus the joining relation that commute with a round: {len(basis)}; rotation-like: {rotlike}")
+# (2) Two senses.  In a ring, waves come in degenerate pairs; sort them by circulation using the ring's own shift
+#     symmetry (move every member two places on), check that mirror reflection swaps the senses, then send a
+#     wave of one sense from A and see which sense arrives in B.
+def shift2(n,E):
+    m=n+E; S=np.zeros((m,m))
+    for j in range(n): S[(j+2)%n,j]=1
+    for k in range(E): S[n+(k+2)%E,n+k]=1
+    return S
+def mirror(n,E):
+    m=n+E; P=np.zeros((m,m))
+    for j in range(n): P[(1-j)%n,j]=1
+    for k in range(E): P[n+(-k)%E,n+k]=-1                     # the relation is traversed the other way round
+    return P
+for N in (16,32,64):
+    n,E,JT,JA,iA,iB,pa,m=build("ring",N,pick=0)
+    S=shift2(n,E); P=mirror(n,E)
+    print(f"ring of {n}: shift commutes with a round {np.abs(S@JA-JA@S).max():.0e}; mirror commutes {np.abs(P@JA-JA@P).max():.0e}")
+    ev,V=np.linalg.eig(JA); g=np.ones(m); g[2*n:]=0.5; gl=np.ones(n+E); gl[n:]=0.5
+    rates=sorted(set(np.round(np.angle(ev[ev.imag>1e-9])/(2*np.pi),6)))
+    for rate in [r for r in rates if 0.12<r<0.38][::3][:3]:
+        idx=[k for k in range(len(ev)) if abs(np.angle(ev[k])/(2*np.pi)-rate)<1e-5]
+        if len(idx)!=2: continue
+        Vd=V[:,idx]; Sd=np.linalg.pinv(Vd)@S@Vd; sv,su=np.linalg.eig(Sd); U=Vd@su     # circulation-sorted waves
+        order=np.argsort(np.angle(sv)); U=U[:,order]; sv=sv[order]
+        Vfull=V.copy(); Vfull[:,idx]=U; Wfull=np.linalg.inv(Vfull)
+        swap=abs(Wfull[idx[1]]@(P@U[:,0]))/np.linalg.norm(Wfull[idx]@(P@U[:,0]))
+        vA=np.zeros(m,complex); vA[iA]=U[:,0]; z=2*np.real(vA); Q0=g@z**2; same=opp=0; best=0
+        for t in range(40*n):
+            cB=Wfull[idx]@z[iB]
+            eB=[gl@(2*np.real(U[:,k]*cB[k]))**2/Q0 for k in (0,1)]
+            if sum(eB)>best: best=sum(eB); same,opp=eB
+            z=JT@z
+        print(f"   waves at {rate:.3f} turns/round: mirror image of one sense lies in the other sense {swap:.0%}; "
+              f"at peak transfer B holds {best:.2f} of the energy, {opp/(same+opp):.0%} of it in the OPPOSITE sense")
+EOF
+timeout 2400 python3 signs.py
+
+=== OUTPUT ===
+joined pairs: transformations of A plus the joining relation that commute with a round: 0; rotation-like: 0
+joined triangles: transformations of A plus the joining relation that commute with a round: 1; rotation-like: 0
+joined rings: transformations of A plus the joining relation that commute with a round: 7; rotation-like: 500
+joined nets: transformations of A plus the joining relation that commute with a round: 16; rotation-like: 443
+ring of 16: shift commutes with a round 0e+00; mirror commutes 0e+00
+   waves at 0.139 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.08 of the energy, 92% of it in the OPPOSITE sense
+   waves at 0.288 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.72 of the energy, 21% of it in the OPPOSITE sense
+ring of 32: shift commutes with a round 0e+00; mirror commutes 0e+00
+   waves at 0.139 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.08 of the energy, 92% of it in the OPPOSITE sense
+   waves at 0.226 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.12 of the energy, 88% of it in the OPPOSITE sense
+   waves at 0.288 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.72 of the energy, 21% of it in the OPPOSITE sense
+ring of 64: shift commutes with a round 0e+00; mirror commutes 0e+00
+   waves at 0.123 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.07 of the energy, 92% of it in the OPPOSITE sense
+   waves at 0.171 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.09 of the energy, 91% of it in the OPPOSITE sense
+   waves at 0.213 turns/round: mirror image of one sense lies in the other sense 100%; at peak transfer B holds 0.10 of the energy, 88% of it in the OPPOSITE sense

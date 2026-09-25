@@ -1,0 +1,12 @@
+Run 014
+Time (UTC): 2026-09-23T09:29:54.928336Z
+Purpose: Run the thermostat test longer to see where the remainder settles
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /tmp && sed -i 's/def run(start, seed, cap=5000, marks=(20,100,500,1000,2000,4000)):/def run(start, seed, cap=16000, marks=(1000,4000,8000,12000,16000)):/' thermo.py && sed -i 's/for label,spread in (("cold start",0.01),("warm start",0.4),("hot start",1.5)):/for label,spread in (("cold start",0.01),("hot start",1.5)):/' thermo.py && sed -i 's/    for seed in (1,2):/    for seed in (3,):/' thermo.py && timeout 3000 python3 thermo.py
+
+=== OUTPUT ===
+cold start seed 3: N=20:0.0000  N=1000:0.0859  N=4000:0.0928  N=8000:0.0946  N=12000:0.0966  N=16000:0.0983
+hot start seed 3: N=20:0.5552  N=1000:0.1178  N=4000:0.1088  N=8000:0.1071  N=12000:0.1070  N=16000:0.1067

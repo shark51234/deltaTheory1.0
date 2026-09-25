@@ -1,0 +1,56 @@
+Run 068
+Time (UTC): 2026-09-23T14:32:27.005110Z
+Purpose: Try A2 with actual exchanges: a source pair, two relay paths of different length, one receiver
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && cat > interference.py << 'EOF'
+import numpy as np
+def run(L1,L2,lat,T=6000,amp=0.02,order='outward'):
+    # nodes: 0 = S1, 1 = S2 (source pair), path A: S1 - a_1..a_L1 - R, path B: S1 - b_1..b_L2 - R
+    edges=[(0,1)]; n=2
+    a=[0]+list(range(n,n+L1)); n+=L1
+    b=[0]+list(range(n,n+L2)); n+=L2
+    R=n; n+=1
+    for p in (a,b):
+        for u,v in zip(p,p[1:]): edges.append((u,v))
+        edges.append((p[-1],R))
+    tau=np.ones(n); dl=np.ones(n)
+    tau[0]*=1+amp; dl[0]*=1-amp; tau[1]*=1-amp; dl[1]*=1+amp     # the source pair starts slightly out of balance
+    hist=[dl.copy() for _ in range(lat+1)]
+    thR=[]; ok=True
+    for t in range(T):
+        dd=hist[-1-lat]                                            # difference registered with latency
+        for (u,v) in edges:                                        # every relation exchanges once per tick, in sequence
+            F=tau[u]*dd[v]-tau[v]*dd[u]; Tt=tau[u]+tau[v]; Dd=dl[u]+dl[v]
+            dl[u]+=F/Tt; dl[v]-=F/Tt; tau[u]-=F/Dd; tau[v]+=F/Dd
+        if (tau<=0).any() or (dl<=0).any(): ok=False; break
+        hist.append(dl.copy()); hist=hist[-(lat+2):]
+        thR.append(0.5*np.log(tau[R]/dl[R]))
+    return ok,np.array(thR)
+for lat in (1,2):
+    print(f"latency {lat}:")
+    for L2 in range(3,3+2*(lat+1)+1):
+        ok,th=run(3,L2,lat)
+        if not ok: print(f"  path lengths 3 and {L2}: positivity broke"); continue
+        tail=th[len(th)//2:]
+        print(f"  path lengths 3 and {L2} (difference {L2-3}): receiver's oscillation size {tail.std():.5f}  (first half {th[:len(th)//2].std():.5f})")
+EOF
+timeout 900 python3 interference.py
+
+=== OUTPUT ===
+latency 1:
+  path lengths 3 and 3 (difference 0): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 4 (difference 1): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 5 (difference 2): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 6 (difference 3): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 7 (difference 4): receiver's oscillation size 0.00000  (first half 0.00000)
+latency 2:
+  path lengths 3 and 3 (difference 0): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 4 (difference 1): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 5 (difference 2): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 6 (difference 3): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 7 (difference 4): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 8 (difference 5): receiver's oscillation size 0.00000  (first half 0.00000)
+  path lengths 3 and 9 (difference 6): receiver's oscillation size 0.00000  (first half 0.00000)

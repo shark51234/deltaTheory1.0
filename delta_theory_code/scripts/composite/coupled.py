@@ -1,0 +1,33 @@
+import numpy as np
+from layer import *
+# Two identical composites A and B joined by ONE relation between a member of each (its own slot each round).
+def build(kind,N,seed=5,pick=None):
+    n,edges,cols=cluster(kind,N,seed); E=len(edges); C=max(cols)+1
+    deg=np.bincount(np.array(edges).ravel(),minlength=n); pa=pick if pick is not None else int(np.argmin(deg))
+    edgesT=edges+[(u+n,v+n) for (u,v) in edges]+[(pa,pa+n)]; colsT=cols+cols+[C]
+    JT=round_matrix(2*n,edgesT,colsT); JA=round_matrix(n,edges,cols)
+    m=2*n+2*E+1; iA=list(range(n))+[2*n+i for i in range(E)]; iB=list(range(n,2*n))+[2*n+E+i for i in range(E)]
+    return n,E,JT,JA,iA,iB,pa,m
+def modes(JA):
+    ev,V=np.linalg.eig(JA); W=np.linalg.inv(V); return ev,V,W
+def transfer(JT,v,w,iA,iB,m,alphas,T):
+    out=[]
+    for a in alphas:
+        vA=np.zeros(m,complex); vA[iA]=v; z=2*np.real(np.exp(1j*a)*vA); rows=[]
+        for t in range(T):
+            rows.append((abs(w@z[iA])**2,abs(w@z[iB])**2)); z=JT@z
+        out.append(rows)
+    return np.array(out)          # [alpha, t, (|a|^2,|b|^2)]
+if __name__=="__main__":
+    alphas=np.linspace(0,2*np.pi,12,endpoint=False)
+    for kind,N in (("pair",2),("triangle",3),("net",6),("net",12),("net",24),("net",48),("net",96)):
+        n,E,JT,JA,iA,iB,pa,m=build(kind,N); ev,V,W=modes(JA)
+        # the internal mode with the most weight on the joining member, among rotating, non-degenerate modes
+        cand=[j for j in range(len(ev)) if ev[j].imag>1e-9 and np.abs(ev-ev[j]).round(8).tolist().count(0.0)==1]
+        j=max(cand,key=lambda j:abs(V[pa,j])*abs(W[j,pa]))
+        v,w=V[:,j],W[j,:]; T=400
+        res=transfer(JT,v,w,iA,iB,m,alphas,T)
+        moved=res[:,:,1].max(); spread=(res[:,:,1].max(0)-res[:,:,1].min(0)).max()/moved
+        leak=np.abs(1-res.sum(2)).max()
+        print(f"{kind:8s} {n:3d} parts: most of A's quantum ever found in B {moved:5.2f}; "
+              f"dependence on the common phase {spread:6.1%}; quanta leaking out of the pair of modes {leak:6.1%}")

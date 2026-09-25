@@ -1,0 +1,18 @@
+Run 029
+Time (UTC): 2026-09-23T13:07:01.889301Z
+Purpose: Option (b): residues live on the relation itself
+Working directory: scripts/rec
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/rec && timeout 3400 bash -c 'for q in 0.8 0.9 0.95 1.0; do python3 ab.py b $q 0 1,2 20000; done'
+
+=== OUTPUT ===
+[b q=0.8 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@3500 || {'births': 1788, 'deaths': 1987, 'stale': 74, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=0.8 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=1172,L=0,giant=0.25,rem=0.136,rel=(-0.0050,-0.0099),debts=2/179 | e10000:M=1766,L=0,giant=0.13,rem=0.229,rel=(-0.0871,+0.0325),debts=8/282 | e15000:M=2189,L=0,giant=0.07,rem=0.183,rel=(+0.0033,-0.0077),debts=12/340 | e20000:M=3329,L=0,giant=0.03,rem=0.263,rel=(+0.0613,-0.0550),debts=13/513 || {'births': 13644, 'deaths': 10513, 'stale': 199, 'void': 0, 'blocked': 4, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=0.9 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=1,L=0,giant=1.00,rem=-0.000,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@5000 || {'births': 2836, 'deaths': 3035, 'stale': 30, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=0.9 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@3000 || {'births': 1658, 'deaths': 1857, 'stale': 12, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=0.95 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@2000 || {'births': 1120, 'deaths': 1319, 'stale': 6, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=0.95 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@1750 || {'births': 914, 'deaths': 1113, 'stale': 2, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=1.0 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@3250 || {'births': 1870, 'deaths': 2069, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b q=1.0 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | collapsed@2750 || {'births': 1638, 'deaths': 1837, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)

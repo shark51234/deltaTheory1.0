@@ -1,0 +1,34 @@
+Run 021
+Time (UTC): 2026-09-23T12:46:40.463078Z
+Purpose: Fine scan near the transition with two seeds, tracking the largest part
+Working directory: scripts/edge
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/edge && cat > scan2.py << 'EOF'
+import numpy as np, sys
+from edge import Universe
+N0=1000; E=60000
+for q in (0.83,0.84,0.845,0.85,0.855):
+    for seed in (7,8):
+        U=Universe(N0,seed=seed); traj=[]; maxshare=[]
+        for e in range(E):
+            if e%6000==0:
+                eta=np.sqrt(U.t[:U.n]*U.d[:U.n]); traj.append(U.n); maxshare.append(round(float(eta.max()/eta.sum()),3))
+            if U.n<2 or U.n>150000: break
+            U.step(q)
+        print(f"q={q:.3f} seed={seed}: N={traj} end={U.n} at e={U.e}; largest part's share of sum(eta)={maxshare}", flush=True)
+EOF
+timeout 3000 python3 scan2.py
+
+=== OUTPUT ===
+q=0.830 seed=7: N=[1000, 2856, 3916, 5686, 7244, 8765, 10616, 12028, 12935, 13929] end=15022 at e=60000; largest part's share of sum(eta)=[0.002, 0.067, 0.127, 0.009, 0.021, 0.029, 0.013, 0.15, 0.019, 0.043]
+q=0.830 seed=8: N=[1000, 2567, 3597, 4969, 6594, 7915, 5665, 3567, 5211, 6462] end=6922 at e=60000; largest part's share of sum(eta)=[0.002, 0.384, 0.038, 0.056, 0.027, 0.267, 0.768, 0.029, 0.018, 0.029]
+q=0.840 seed=7: N=[1000, 2932, 3788, 4304, 3694] end=1 at e=29582; largest part's share of sum(eta)=[0.002, 0.179, 0.119, 0.05, 0.767]
+q=0.840 seed=8: N=[1000, 2707, 4616, 6019, 7573, 9234, 10552, 12038, 13472, 15083] end=16642 at e=60000; largest part's share of sum(eta)=[0.002, 0.122, 0.03, 0.024, 0.027, 0.021, 0.025, 0.024, 0.015, 0.011]
+q=0.845 seed=7: N=[1000, 2990, 2878] end=1 at e=16002; largest part's share of sum(eta)=[0.002, 0.025, 0.681]
+q=0.845 seed=8: N=[1000, 3123, 4866, 6630, 8118, 9863, 11133, 12004, 12873, 14067] end=15071 at e=60000; largest part's share of sum(eta)=[0.002, 0.015, 0.009, 0.013, 0.012, 0.037, 0.072, 0.059, 0.013, 0.015]
+q=0.850 seed=7: N=[1000, 2630, 3324, 4349, 4910, 1070] end=1 at e=31280; largest part's share of sum(eta)=[0.002, 0.105, 0.269, 0.02, 0.422, 0.977]
+q=0.850 seed=8: N=[1000, 2566, 3913, 4803, 5822, 6932, 8316, 9190, 9762, 10798] end=11710 at e=60000; largest part's share of sum(eta)=[0.002, 0.042, 0.039, 0.23, 0.026, 0.054, 0.029, 0.123, 0.019, 0.047]
+q=0.855 seed=7: N=[1000, 2624, 3545, 4141, 4538, 573] end=1 at e=30666; largest part's share of sum(eta)=[0.002, 0.076, 0.036, 0.059, 0.459, 0.993]
+q=0.855 seed=8: N=[1000, 2653, 4080, 5432, 6517, 7407, 5467, 2811] end=1 at e=45402; largest part's share of sum(eta)=[0.002, 0.018, 0.03, 0.023, 0.036, 0.302, 0.786, 0.878]

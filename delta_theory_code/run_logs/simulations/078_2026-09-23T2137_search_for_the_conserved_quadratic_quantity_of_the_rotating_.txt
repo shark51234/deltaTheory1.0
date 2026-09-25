@@ -1,0 +1,34 @@
+Run 078
+Time (UTC): 2026-09-23T21:37:04.546058Z
+Purpose: Search for the conserved quadratic quantity of the rotating layer (the candidate for total probability)
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && python3 - << 'EOF' 2>/dev/null | tail -3
+import numpy as np
+from perspectival import colour, network
+edges,n=network(3,24); col,C=colour(edges)
+def trial(a,R=4000):
+    tau=np.ones(n); dl=np.ones(n); tau[0]*=np.exp(a); dl[0]*=np.exp(-a)
+    rel={(u,v):(tau[u]/(tau[u]+tau[v]),dl[u]/(dl[u]+dl[v])) for (u,v) in edges}
+    E=[];S=[];M=[]
+    for r in range(R):
+        for t in range(C):
+            for (u,v) in edges:
+                if col[(u,v)]!=t: continue
+                T=tau[u]+tau[v]; D=dl[u]+dl[v]; xu,yu=rel[(u,v)]; rel[(u,v)]=(tau[u]/T,dl[u]/D)
+                tau[u],tau[v]=T*yu,T*(1-yu); dl[u],dl[v]=D*xu,D*(1-xu)
+        th=0.5*np.log((tau/tau.sum())/(dl/dl.sum())); lm=0.5*np.log((tau/tau.sum())*(dl/dl.sum()))
+        E.append(sum((th[u]-th[v])**2 for u,v in edges)); S.append((th**2).sum()); M.append(((lm-lm.mean())**2).sum())
+    E,S,M=map(np.array,(E,S,M)); rs=lambda x: x[500:].std()/x[500:].mean()
+    tot=S+M
+    print(f"kick {a}: relative spread over time — sum of theta^2: {rs(S):.2f}; sum over relations of (dtheta)^2: {rs(E):.2f}; "
+          f"theta^2 plus size-fluctuation^2 (balance and size together): {rs(tot):.3f}")
+for a in (0.01,0.02,0.04): trial(a)
+EOF
+
+=== OUTPUT ===
+kick 0.01: relative spread over time — sum of theta^2: 0.41; sum over relations of (dtheta)^2: 0.59; theta^2 plus size-fluctuation^2 (balance and size together): 0.408
+kick 0.02: relative spread over time — sum of theta^2: 0.41; sum over relations of (dtheta)^2: 0.59; theta^2 plus size-fluctuation^2 (balance and size together): 0.405
+kick 0.04: relative spread over time — sum of theta^2: 0.41; sum over relations of (dtheta)^2: 0.59; theta^2 plus size-fluctuation^2 (balance and size together): 0.393

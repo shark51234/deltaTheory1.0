@@ -1,0 +1,25 @@
+Run 045
+Time (UTC): 2026-09-23T13:47:53.199708Z
+Purpose: Verify the reduction: selves minus relations compares the mass angle with the motion angle
+Working directory: scripts/activity
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/activity && python3 - << 'EOF'
+# Algebra check: the identity's two sides compare a mass angle and a motion angle
+import numpy as np
+r=np.random.default_rng(3); worst=0; agree=0; n=200000
+for _ in range(n):
+    ta,da,tb,db=r.uniform(0.001,2,4)
+    ea,eb=np.sqrt(ta*da),np.sqrt(tb*db); tha,thb=0.5*np.log(ta/da),0.5*np.log(tb/db)
+    S=ta*da+tb*db; C=ta*db+tb*da
+    lhs=S-C; rhs=2*ea*eb*(np.cosh(np.log(ea/eb))-np.cosh(tha-thb))
+    worst=max(worst,abs(lhs-rhs)/max(abs(lhs),1e-12))
+    agree+= ((S>C)==(abs(np.log(ea/eb))>abs(tha-thb)))
+print("max relative error of S-C = 2*eta_A*eta_B*(cosh(ln mass ratio) - cosh(rapidity difference)):",worst)
+print("timelike <=> |ln mass ratio| > |rapidity difference| agreed in",agree,"of",n,"random pairs")
+EOF
+
+=== OUTPUT ===
+max relative error of S-C = 2*eta_A*eta_B*(cosh(ln mass ratio) - cosh(rapidity difference)): 6.951132744018271e-10
+timelike <=> |ln mass ratio| > |rapidity difference| agreed in 200000 of 200000 random pairs

@@ -1,0 +1,66 @@
+Run 052
+Time (UTC): 2026-09-23T13:59:24.418858Z
+Purpose: Measure distance by how different connected parts are, and the dimension a processor would see at each reach
+Working directory: scripts/space
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/space && cat > weighted.py << 'EOF'
+import numpy as np, heapq, json
+from space import World
+def snapshot(w):
+    nodes=list(w.alive_list); idx={k:n for n,k in enumerate(nodes)}
+    lt=np.log(w.t[nodes]); ld=np.log(w.d[nodes])
+    adj=[[idx[m] for m in w.nb[k]] for k in nodes]
+    eta=np.sqrt(w.t[nodes]*w.d[nodes])
+    return dict(lt=lt,ld=ld,adj=adj,eta=eta)
+def lengths(S,metric):
+    lt,ld=S['lt'],S['ld']
+    def L(a,b):
+        x=abs(lt[a]-lt[b]); y=abs(ld[a]-ld[b])
+        return 1.0 if metric=='steps' else (np.hypot(x,y) if metric=='L2' else x+y)
+    return L
+def dijkstra(S,src,L):
+    dist={src:0.0}; pq=[(0.0,src)]
+    while pq:
+        d0,u=heapq.heappop(pq)
+        if d0>dist[u]: continue
+        for v in S['adj'][u]:
+            nd=d0+L(u,v)
+            if nd<dist.get(v,1e300): dist[v]=nd; heapq.heappush(pq,(nd,v))
+    return np.array(list(dist.values()))
+w=World(4,'pair'); snaps={}
+for target in (4000,12000,25000):
+    while len(w.alive_list)<target: w.step()
+    snaps[target]=snapshot(w)
+rng=np.random.default_rng(11); out={}
+for metric in ('steps','L2','L1'):
+    print(f"--- distance measured as {metric} ---")
+    for N,S in snaps.items():
+        L=lengths(S,metric); n=len(S['adj'])
+        srcs=rng.choice(n,16,replace=False); alld=[dijkstra(S,int(s),L) for s in srcs]
+        mean=np.mean([d.mean() for d in alld])
+        # 'dimension seen by a processor of reach rho': d ln(parts within rho) / d ln rho
+        q=np.quantile(np.concatenate(alld),[0.002,0.01,0.05,0.2,0.5])
+        rhos=q[q>0]
+        vols=[np.mean([np.sum(d<=r) for d in alld]) for r in rhos]
+        dims=[np.log(vols[k+1]/vols[k])/np.log(rhos[k+1]/rhos[k]) for k in range(len(rhos)-1)]
+        print(f"N={N:6d}: mean distance {mean:8.3f} | parts within reach at the 0.2/1/5/20/50% distance quantiles: {np.round(vols).astype(int).tolist()} | dimension seen at increasing reach: {np.round(dims,2).tolist()}",flush=True)
+        out[f"{metric}_{N}"]=dict(mean=float(mean),vols=[float(v) for v in vols],rhos=[float(r) for r in rhos],dims=[float(x) for x in dims])
+json.dump(out,open("weighted.json","w"))
+EOF
+timeout 3400 python3 weighted.py 2>/dev/null
+
+=== OUTPUT ===
+--- distance measured as steps ---
+N=  4000: mean distance    7.785 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [16, 58, 203, 1071, 2541] | dimension seen at increasing reach: [3.26, 4.36, 4.1, 3.0]
+N= 12000: mean distance    8.813 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [47, 177, 1506, 3347, 8053] | dimension seen at increasing reach: [4.65, 5.28, 5.18, 3.49]
+N= 25000: mean distance    9.760 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [73, 569, 1424, 6521, 15883] | dimension seen at increasing reach: [4.02, 5.03, 5.29, 3.99]
+--- distance measured as L2 ---
+N=  4000: mean distance   47.051 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [8, 40, 200, 800, 2000] | dimension seen at increasing reach: [1.01, 2.53, 5.25, 4.88]
+N= 12000: mean distance   62.868 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [24, 120, 600, 2400, 6000] | dimension seen at increasing reach: [1.75, 3.21, 6.72, 6.38]
+N= 25000: mean distance   75.066 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [50, 250, 1250, 5000, 12500] | dimension seen at increasing reach: [1.83, 5.75, 7.76, 6.07]
+--- distance measured as L1 ---
+N=  4000: mean distance   64.334 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [8, 40, 200, 800, 2000] | dimension seen at increasing reach: [1.07, 2.7, 4.94, 4.43]
+N= 12000: mean distance   88.397 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [24, 120, 600, 2400, 6000] | dimension seen at increasing reach: [1.48, 4.63, 6.58, 5.35]
+N= 25000: mean distance  104.904 | parts within reach at the 0.2/1/5/20/50% distance quantiles: [50, 250, 1250, 5000, 12500] | dimension seen at increasing reach: [1.96, 3.6, 7.84, 6.29]

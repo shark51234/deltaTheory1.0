@@ -1,0 +1,23 @@
+Run 062
+Time (UTC): 2026-09-23T14:17:16.264144Z
+Purpose: Derive the binding condition: debt times continuity against the kinetic surplus of relative motion
+Working directory: scripts/binding
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/binding && python3 - << 'EOF'
+# Derive and verify: a pair with relation state sigma (in the difference component) is bound exactly when
+#   (debt) * (tau_a + tau_b)  >  4 * eta_a * eta_b * sinh^2(dtheta/2)      [units with I = 1, debt = -sigma]
+import numpy as np
+r=np.random.default_rng(0); agree=0; n=200000
+for _ in range(n):
+    ta,da,tb,db=r.uniform(0.01,1,4); sig=-r.uniform(0,0.5)*(da+db)
+    ea,eb=np.sqrt(ta*da),np.sqrt(tb*db); dth=0.5*np.log(ta/da)-0.5*np.log(tb/db)
+    D=da+db+sig; direct=(np.sqrt((ta+tb)*D) if D>0 else 0.0) < ea+eb
+    cond=(-sig)*(ta+tb) > 4*ea*eb*np.sinh(dth/2)**2
+    agree+=(direct==cond)
+print(f"derived condition agrees with the direct composite-mass test in {agree} of {n} random pairs")
+EOF
+
+=== OUTPUT ===
+derived condition agrees with the direct composite-mass test in 200000 of 200000 random pairs

@@ -1,0 +1,74 @@
+Run 075
+Time (UTC): 2026-09-23T14:38:47.693109Z
+Purpose: Replace the shared flux (a view from nowhere) with each part's own correction, and test finite unevenness
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && cat > perspectival.py << 'EOF'
+import numpy as np
+def colour(edges):
+    col={}
+    for e in edges:
+        used={col[f] for f in col if set(f)&set(e)}; c=0
+        while c in used: c+=1
+        col[e]=c
+    return col,max(col.values())+1
+def step_round(tau,dl,rec,sig,edges,col,C,mode):
+    for t in range(C):
+        for (u,v) in edges:
+            if col[(u,v)]!=t: continue
+            tu,du,tv,dv=tau[u],dl[u],tau[v],dl[v]
+            if mode=='flux':        # one shared flux computed from both records (the form used in A1/A2)
+                F=tu*rec[(u,v)][1]-tv*rec[(v,u)][1]; T=tu+tv; D=du+dv
+                dl[u]+=F/T; dl[v]-=F/T; tau[u]-=F/D; tau[v]+=F/D
+            else:                   # perspectival: each part corrects itself by the exchange law with its own record of the other
+                Tu=tu+rec[(u,v)][0]; Du=du+rec[(u,v)][1]; Tv=tv+rec[(v,u)][0]; Dv=dv+rec[(v,u)][1]
+                tau[u],dl[u]=Tu*du/Du, Du*tu/Tu
+                tau[v],dl[v]=Tv*dv/Dv, Dv*tv/Tv
+                s=sig.setdefault((u,v),np.zeros(2)); s+= [tu+tv-tau[u]-tau[v], du+dv-dl[u]-dl[v]]
+            rec[(u,v)]=(tv,dv); rec[(v,u)]=(tu,du)
+    return tau,dl
+def network(seed,N=20):
+    rng=np.random.default_rng(seed); edges=[(0,1)]; n=2
+    for _ in range(N-2):
+        u,v=edges[rng.integers(len(edges))]; c=n; n+=1; edges+=[(u,c),(v,c)]
+    return edges,n
+def run(mode,spread,rounds,seed=3,eps=0.0,base=None):
+    edges,n=network(seed); col,C=colour(edges); rng=np.random.default_rng(seed+1)
+    if base is None:
+        tau=np.exp(rng.normal(0,spread,n)); dl=np.exp(rng.normal(0,spread,n))
+    else: tau,dl=base[0].copy(),base[1].copy()
+    if eps: tau*=np.exp(eps*rng.normal(size=n)); dl*=np.exp(eps*rng.normal(size=n))
+    rec={}
+    for (u,v) in edges: rec[(u,v)]=(tau[v],dl[v]); rec[(v,u)]=(tau[u],dl[u])
+    sig={}; T0,D0=tau.sum(),dl.sum(); traj=[]
+    for r in range(rounds):
+        tau,dl=step_round(tau,dl,rec,sig,edges,col,C,mode)
+        if (tau<=0).any() or (dl<=0).any() or not np.isfinite(tau).all(): return None,r
+        traj.append(np.concatenate([np.log(tau),np.log(dl)]))
+    st=np.array([s for s in sig.values()]) if sig else np.zeros((1,2))
+    cons=(tau.sum()+st[:,0].sum()-T0, dl.sum()+st[:,1].sum()-D0)
+    th=0.5*np.log(tau/dl)
+    return dict(traj=np.array(traj),theta_spread=th.std(),eta_spread=np.log(np.sqrt(tau*dl)).std(),
+                relmax=np.abs(st).max()/np.mean(np.sqrt(tau*dl)),cons=cons),rounds
+print("finite unevenness: does the background stay valid?")
+for spread in (0.05,0.2,0.4,1.0):
+    for mode in ('flux','perspectival'):
+        res,r=run(mode,spread,3000)
+        if res is None: print(f"  spread {spread:4.2f} {mode:13s}: positivity broke after {r} rounds")
+        else: print(f"  spread {spread:4.2f} {mode:13s}: valid for 3000 rounds; rapidity spread {res['theta_spread']:.3f}, size spread {res['eta_spread']:.3f}, "
+                    f"largest relation state {res['relmax']:.2f} x typical part, conservation error {max(abs(res['cons'][0]),abs(res['cons'][1])):.1e}")
+EOF
+timeout 1500 python3 perspectival.py
+
+=== OUTPUT ===
+finite unevenness: does the background stay valid?
+  spread 0.05 flux         : positivity broke after 862 rounds
+  spread 0.05 perspectival : valid for 3000 rounds; rapidity spread 7.774, size spread 0.034, largest relation state 168545.81 x typical part, conservation error 2.2e-10
+  spread 0.20 flux         : positivity broke after 40 rounds
+  spread 0.20 perspectival : valid for 3000 rounds; rapidity spread 36.075, size spread 0.136, largest relation state 1801379649473090682880.00 x typical part, conservation error 7.9e+05
+  spread 0.40 flux         : positivity broke after 1 rounds
+  spread 0.40 perspectival : valid for 3000 rounds; rapidity spread 26.229, size spread 0.272, largest relation state 5278559185611521024.00 x typical part, conservation error 4.1e+03
+  spread 1.00 flux         : positivity broke after 0 rounds
+  spread 1.00 perspectival : valid for 3000 rounds; rapidity spread 9.205, size spread 0.679, largest relation state 203459751.17 x typical part, conservation error 5.7e-07

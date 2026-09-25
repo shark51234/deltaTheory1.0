@@ -1,0 +1,56 @@
+import numpy as np
+from covariant import evolve, colour, network
+# TEST 2 at the level of the lossless layer: is there ANY linear transformation that acts only on one part
+# (its own continuity and difference, and the memories of its own relations) and leaves one round unchanged?
+# This covers every linear version of "reset this part's clock origin", rotations, reflections, anything.
+def roundmap(edges,n,col,C):
+    E=len(edges); zero={e:0.0 for e in edges}
+    def f(z):
+        tau=np.exp(z[:n]); dl=np.exp(z[n:2*n]); rec={e:(0.5+z[2*n+i],0.5+z[2*n+E+i]) for i,e in enumerate(edges)}
+        tau,dl,rec=evolve(tau,dl,rec,zero,edges,col,C,1)
+        return np.concatenate([np.log(tau),np.log(dl),[rec[e][0]-0.5 for e in edges],[rec[e][1]-0.5 for e in edges]])
+    m=2*n+2*E; J=np.zeros((m,m)); h=1e-6
+    for i in range(m):
+        z=np.zeros(m); z[i]=h; J[:,i]=(f(z)-f(-z))/(2*h)
+    return J
+def commutant(J,blocks):
+    m=J.shape[0]; cols=[]
+    for b in blocks:
+        for i in b:
+            for j in b:
+                M=np.zeros((m,m)); M[:,j]+=J[:,i]; M[i,:]-=J[j,:]; cols.append(M.ravel())
+    A=np.array(cols).T; u,s,vt=np.linalg.svd(A,full_matrices=False)
+    null=vt[s<1e-6*s[0]]
+    basis=[]
+    for v in null:
+        N=np.zeros((m,m)); k=0
+        for b in blocks:
+            for i in b:
+                for j in b: N[i,j]=v[k]; k+=1
+        basis.append(N)
+    return basis,s
+for seed,N in ((3,12),(5,20),(11,16)):
+    edges,n=network(seed,N); col,C=colour(edges); E=len(edges); J=roundmap(edges,n,col,C)
+    print(f"network: {n} parts, {E} relations; eigenvalues of one round all on the unit circle: {np.allclose(np.abs(np.linalg.eigvals(J)),1,atol=1e-5)}")
+    # (a) transformations built from independent pieces at every part and every relation
+    blocks=[[k,n+k] for k in range(n)]+[[2*n+e,2*n+E+e] for e in range(E)]
+    basis,s=commutant(J,blocks)
+    rng=np.random.default_rng(0); cplx=0
+    for _ in range(2000):
+        M=sum(rng.normal()*B for B in basis); ev=np.linalg.eigvals(M); cplx+=np.abs(ev.imag).max()>1e-8
+    print(f"   piecewise transformations that commute with a round: {len(basis)} independent ones")
+    for B in basis:
+        b=B/np.abs(B).max(); print(f"      part block {np.round(b[0:n+1:n,0:n+1:n][[0,1]][:, [0,1]],3).tolist()}  relation block {np.round(b[[2*n,2*n+E]][:,[2*n,2*n+E]],3).tolist()}")
+    print(f"   combinations with rotation-like (complex) eigenvalues: {cplx} of 2000")
+    # (b) transformations confined to ONE part and its own relations
+    worst=0; stay=0
+    for k in range(n):
+        S=[k,n+k]+[2*n+e for e,(u,v) in enumerate(edges) if k in (u,v)]+[2*n+E+e for e,(u,v) in enumerate(edges) if k in (u,v)]
+        b,s=commutant(J,[S]); worst=max(worst,len(b))
+        # weaker: transformations that are still confined to part k one round later (M -> J M J^-1)
+        Ji=np.linalg.inv(J); m=J.shape[0]; out=np.ones((m,m),bool); out[np.ix_(S,S)]=False; cols=[]
+        for i in S:
+            for j in S:
+                M=np.zeros((m,m)); M[i,j]=1; cols.append((J@M@Ji)[out])
+        sv=np.linalg.svd(np.array(cols).T,compute_uv=False); stay=max(stay,int((sv<1e-6*sv[0]).sum()))
+    print(f"   confined to one part: commuting transformations (any part): at most {worst}; still confined one round later: at most {stay}")

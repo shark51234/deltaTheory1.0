@@ -1,0 +1,77 @@
+Run 124
+Time (UTC): 2026-09-24T03:09:58.651342Z
+Purpose: Apply the clarification edits to the merge pipeline correctly
+Working directory: scripts/ed3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/ed3 && python3 - << 'PYEOF'
+p='merge.py'; s=open(p).read()
+def sub(old,new):
+    global s
+    assert s.count(old)==1, "merge.py missing: "+old[:90]
+    s=s.replace(old,new)
+sub(r"""left. When all the clocks agree, the remainders of all parts add up to the whole and reconstitute $I$.
+\hfill(the tick note \cite{ticknote}; working notes III(d))""",
+r"""left for other parts. A part whose clock completes vanishes, and the vanishing is itself an event that
+disturbs the field. If all the clocks agreed at once, the remainders would add up to the whole and
+reconstitute $I$, and reality would cease. \hfill(the tick note \cite{ticknote} and its clarification;
+working notes III(d))""")
+sub(r"""discrete steps that approach the whole's value but never reach it; what is left when it stops is its
+remainder, and the remainders of all parts make up the whole when their clocks agree.""",
+r"""discrete steps that approach the whole's value but never reach it; what is left is its remainder, which it
+leaves to other parts when it vanishes. If every clock agreed at once, the remainders would make up the whole
+and reality would end.""")
+sub(r"""then absorbed by them: its clock stops and its remainder passes on (Proposition~\ref{prop:passon}).""",
+r"""then left to them: its clock completes, and its vanishing disturbs the field around it
+(Definition~\ref{def:vanish}).""")
+sub(r"""remainders: they add up to the whole exactly when every clock agrees with the whole's
+(Theorem~\ref{thm:column}). What the shortfall \emph{is} becomes clear in Chapter~\ref{ch:exchange}: it is
+motion.""",
+r"""remainders: they would add up to the whole only if every clock agreed with the whole's
+(Theorem~\ref{thm:column}), which would end reality and never happens (Corollary~\ref{cor:noclosure}). What
+the shortfall \emph{is} becomes clear in Chapter~\ref{ch:exchange}: it is motion.""")
+sub(r"""disagree, and it is zero only in a universe where nothing moves relative to anything else
+(Theorem~\ref{thm:column}).""",
+r"""disagree, and it would be zero only in a universe where nothing moves relative to anything else
+(Theorem~\ref{thm:column}), which never happens (Corollary~\ref{cor:noclosure}).""")
+sub(r"""parts' remainders reconstitute $I$ exactly when their clocks agree. This closes the discrepancy between the
+derived budget $2\eta_0$ and $I$, and makes the remainder of Part I the desynchronisation of the clocks. It
+then builds""",
+r"""remainders of vanishing parts pass to other parts, the act of vanishing disturbing the field. If all clocks
+agreed at once the remainders would rebuild $I$ and reality would cease; this never happens. The note closes
+the discrepancy between the derived budget $2\eta_0$ and $I$, makes the remainder of Part I the
+desynchronisation of the clocks, and, with vanishing as an act, gives the universe a set point of
+desynchronisation near one tenth. Part III then builds""")
+# new replacement for the causal chapter, inserted before the summary-chapter edits
+sub("# summary chapter of Parts I-II", r'''m=rep(m,r"""(A variant in which timelike pairs use the pair-matrix selection of \S6.5 behaves similarly.)""",
+r"""(A variant in which timelike pairs use the pair-matrix selection of \S6.5 behaves similarly.)
+In the third edition the absorbed part vanishes as an act: its continuity stays with the containing part and
+its difference spreads to all its neighbours (Definition~\ref{def:vanish}). The numerical results of Part II
+were obtained with silent absorption; Chapter~\ref{ch:ticks} rechecks those that bear on the change.""")
+# summary chapter of Parts I-II''')
+sub(r'''"Universes drift toward synchronised clocks ($R$ falls 3--17-fold in 6 of 7) & \\Numerical{} \\\\\\n"''',
+    r'''"With vanishing as an act, desynchronisation holds at 0.07--0.12; reality never closes & \\Derived{} / \\Numerical{} \\\\\\n"''')
+sub(r"""ticks approach the whole's value and never reach it, and the parts' remainders give back the whole exactly when
+their clocks agree.\"\"\")""",
+r"""ticks approach the whole's value and never reach it. When a clock completes, its part vanishes, leaving its
+remainder to others and disturbing the field, and those disturbances keep the clocks from ever all agreeing,
+which would end reality.\"\"\")""")
+sub(r"""\\\\item \\\\textbf{Full synchronisation} \\\\Open{}. Universes drift toward $R\\\\to0$ in their bulk, but small parts
+stay out of step with their neighbours; whether clocks all agree when events cease is untested.""",
+r"""\\\\item \\\\textbf{Part II under vanishing} \\\\Open{}. The horizon and binding analyses used silent absorption and
+have not been repeated with vanishing as an act.""")
+sub(r"""The synchronisation test runs the causal event rule with the derived activity rule (Part II) and records $R$ every 50{,}000--100{,}000 events.""",
+r"""The synchronisation tests run the causal event rule with the derived activity rule (Part II), with silent absorption or with vanishing as an act, and record $R$ every 50{,}000--100{,}000 events; space is measured by breadth-first ball growth from 40 ordinary parts.""")
+open(p,'w').write(s); print("merge.py updated")
+PYEOF
+grep -c "vanishing disturbs the field around it" merge.py
+
+=== OUTPUT ===
+0
+
+[stderr]
+Traceback (most recent call last):
+  File "<stdin>", line 45, in <module>
+  File "<stdin>", line 4, in sub
+AssertionError: merge.py missing: "Universes drift toward synchronised clocks ($R$ falls 3--17-fold in 6 of 7) & \\Numerical

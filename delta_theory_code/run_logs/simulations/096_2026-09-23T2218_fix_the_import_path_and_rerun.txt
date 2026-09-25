@@ -1,0 +1,20 @@
+Run 096
+Time (UTC): 2026-09-23T22:18:31.793195Z
+Purpose: Fix the import path and rerun
+Working directory: scripts/composite
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/composite && sed -i "s#^exec(open('/home/claude/gauge/circle.py')#sys.path.insert(0,'/home/claude/gauge'); exec(open('/home/claude/gauge/circle.py')#" isolated.py && sed -i "1a import sys" isolated.py && python3 isolated.py
+
+=== OUTPUT ===
+reduced rapidity layer reproduces the full layer's eigenvalues: True
+pair     ( 2 parts): all eigenvalues on the unit circle True; rotating modes 1 (turns per round: [0.25]); degenerate pairs 0
+triangle ( 3 parts): all eigenvalues on the unit circle True; rotating modes 2 (turns per round: [0.274, 0.317]); degenerate pairs 0
+ring     ( 6 parts): all eigenvalues on the unit circle True; rotating modes 5 (turns per round: [0.181, 0.181, 0.298, 0.298, 0.333]); degenerate pairs 2
+ring     ( 8 parts): all eigenvalues on the unit circle True; rotating modes 7 (turns per round: [0.139, 0.139, 0.25, 0.25, 0.314, 0.314, 0.333]); degenerate pairs 3
+ring     (12 parts): all eigenvalues on the unit circle True; rotating modes 11 (turns per round: [0.095, 0.095, 0.181, 0.181, 0.25, 0.25, 0.298, 0.298, 0.325, 0.325, 0.333]); degenerate pairs 5
+net      (12 parts): all eigenvalues on the unit circle True; rotating modes 14 (turns per round: [0.042, 0.079, 0.138, 0.184, 0.216, 0.265, 0.278, 0.31, 0.327, 0.342, 0.353, 0.369, 0.385, 0.396]); degenerate pairs 0
+pair: rotating its internal state by 0.3: commutes with its contact to 0e+00
+pair: rotating its internal state by 1.0: commutes with its contact to 0e+00
+pair: rotating its internal state by 2.2: commutes with its contact to 0e+00

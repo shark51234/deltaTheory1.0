@@ -1,0 +1,25 @@
+Run 019
+Time (UTC): 2026-09-23T10:34:51.987436Z
+Purpose: Move the figure legend, do the final compile and copy both files to outputs
+Working directory: scripts/delta
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/delta && python3 - << 'EOF'
+p='delta_theory_mathematics.tex'
+s=open(p).read()
+old=r"legend style={at={(0.5,0.03)},anchor=south,font=\small,legend columns=2},"
+assert old in s
+s=s.replace(old, r"legend style={at={(0.98,0.97)},anchor=north east,font=\small},")
+open(p,'w').write(s)
+EOF
+for i in 1 2; do pdflatex -interaction=nonstopmode -halt-on-error delta_theory_mathematics.tex > build6.log 2>&1; done; echo "exit: $?"; grep -E "Overfull|LaTeX Warning|^!" build6.log | head -5; pdfinfo delta_theory_mathematics.pdf | grep Pages; mkdir -p /mnt/user-data/outputs && cp delta_theory_mathematics.tex delta_theory_mathematics.pdf /mnt/user-data/outputs/ && ls -la /mnt/user-data/outputs/
+
+=== OUTPUT ===
+exit: 0
+Pages:           35
+total 352
+drwxr-xr-x 1 claude ubuntu      0 Sep 23 10:35 .
+drwxr-xr-x 5 root   root     4096 Sep 23 07:30 ..
+-rw-r--r-- 1 claude ubuntu 276420 Sep 23 10:35 delta_theory_mathematics.pdf
+-rw-r--r-- 1 claude ubuntu  76758 Sep 23 10:35 delta_theory_mathematics.tex

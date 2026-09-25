@@ -1,0 +1,44 @@
+Run 032
+Time (UTC): 2026-09-23T13:21:13.820118Z
+Purpose: Measure the geometry of the relational network the two-view universe grows
+Working directory: scripts/twoview
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/twoview && cat > geo.py << 'EOF'
+import numpy as np, random
+from collections import deque
+from tv import World
+def bfs(w,src):
+    dist={src:0}; dq=deque([src])
+    while dq:
+        u=dq.popleft()
+        for v in w.nb[u]:
+            if v not in dist: dist[v]=dist[u]+1; dq.append(v)
+    return dist
+for seed in (1,2):
+    w=World(200,seed,rule='twoview'); marks=[1000,3000,10000,30000]
+    while marks:
+        idx=np.flatnonzero(w.alive)
+        if len(idx)>=marks[0]:
+            marks.pop(0); rng=random.Random(seed); srcs=rng.sample(list(idx),12)
+            means=[]; ecc=[]; balls=np.zeros(40)
+            for s0 in srcs:
+                d=np.array(list(bfs(w,s0).values())); means.append(d.mean()); ecc.append(d.max())
+                for r in range(40): balls[r]+=np.sum(d<=r)
+            balls/=len(srcs)
+            growth=" ".join(f"{int(balls[r])}" for r in range(1,9))
+            print(f"s{seed} N={len(idx):6d}: mean distance={np.mean(means):.2f}, farthest={np.mean(ecc):.1f}, parts within r=1..8: {growth}",flush=True)
+        w.step()
+EOF
+timeout 1500 python3 geo.py
+
+=== OUTPUT ===
+s1 N=  1000: mean distance=51.69, farthest=102.0, parts within r=1..8: 4 10 19 28 39 49 59 70
+s1 N=  3000: mean distance=52.47, farthest=103.2, parts within r=1..8: 4 16 34 63 94 123 148 175
+s1 N= 10000: mean distance=53.70, farthest=105.0, parts within r=1..8: 4 15 45 103 174 258 357 456
+s1 N= 30000: mean distance=55.08, farthest=107.0, parts within r=1..8: 4 17 48 121 250 446 714 1026
+s2 N=  1000: mean distance=51.76, farthest=102.1, parts within r=1..8: 4 10 19 26 37 47 57 67
+s2 N=  3000: mean distance=52.63, farthest=103.4, parts within r=1..8: 6 16 33 59 89 119 150 178
+s2 N= 10000: mean distance=53.65, farthest=105.3, parts within r=1..8: 6 19 53 110 200 302 398 493
+s2 N= 30000: mean distance=54.88, farthest=107.1, parts within r=1..8: 4 15 45 119 260 474 725 987

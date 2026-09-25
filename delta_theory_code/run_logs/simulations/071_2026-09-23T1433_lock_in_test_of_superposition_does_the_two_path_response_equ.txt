@@ -1,0 +1,69 @@
+Run 071
+Time (UTC): 2026-09-23T14:33:39.336168Z
+Purpose: Lock-in test of superposition: does the two-path response equal the sum of the one-path responses, and does their phase track path length?
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && cat > interference3.py << 'EOF'
+import numpy as np
+from interference2 import build
+def run(L1,L2,cut=None,T=12000,amp=0.02):
+    n,R,edges,col=build(L1,L2); C=max(col.values())+1
+    tau=np.ones(n); dl=np.ones(n)
+    tau[0]*=1+amp; dl[0]*=1-amp; tau[1]*=1-amp; dl[1]*=1+amp
+    rec={}
+    for (u,v) in edges: rec[(u,v)]=dl[v]; rec[(v,u)]=dl[u]
+    # the relation that delivers each path to the receiver
+    endA=[e for e in edges if e[1]==R][0]; endB=[e for e in edges if e[1]==R][1]
+    skip={'A':endB,'B':endA}.get(cut)      # 'A' = only path A reaches R; 'B' = only path B reaches R
+    th=np.zeros(T); thS=np.zeros(T)
+    for t in range(T):
+        for (u,v) in edges:
+            if col[(u,v)]!=t%C or (u,v)==skip: continue
+            du,dv=dl[u],dl[v]; F=tau[u]*rec[(u,v)]-tau[v]*rec[(v,u)]
+            Tt=tau[u]+tau[v]; Dd=du+dv; dl[u]+=F/Tt; dl[v]-=F/Tt; tau[u]-=F/Dd; tau[v]+=F/Dd
+            rec[(u,v)]=dv; rec[(v,u)]=du
+        th[t]=0.5*np.log(tau[R]/dl[R]); thS[t]=0.5*np.log(tau[0]/dl[0])
+    return th,thS
+def lockin(x,f):
+    t=np.arange(len(x)); h=len(x)//3
+    return 2*np.mean((x[h:]-x[h:].mean())*np.exp(-2j*np.pi*f*t[h:]))
+L1=3
+th,thS=run(L1,L1)
+s=thS[len(thS)//3:]-thS[len(thS)//3:].mean(); spec=np.abs(np.fft.rfft(s)); fr=np.fft.rfftfreq(len(s))
+f0=fr[np.argmax(spec[1:])+1]
+print(f"source's dominant frequency: {f0:.4f} cycles per tick (a relation meets every 3 ticks; 1/12 = {1/12:.4f} is a quarter-turn per meeting)")
+print(f"{'path difference':>15s} {'|A|':>8s} {'|B|':>8s} {'|both|':>8s} {'|A+B|':>8s} {'phase(B/A)/pi':>14s}")
+for L2 in range(L1,L1+13):
+    both,_=run(L1,L2); onlyA,_=run(L1,L2,'A'); onlyB,_=run(L1,L2,'B')
+    zA,zB,zAB=lockin(onlyA,f0),lockin(onlyB,f0),lockin(both,f0)
+    print(f"{L2-L1:15d} {abs(zA):8.5f} {abs(zB):8.5f} {abs(zAB):8.5f} {abs(zA+zB):8.5f} {np.angle(zB/zA)/np.pi:14.3f}")
+EOF
+timeout 1500 python3 interference3.py
+
+=== OUTPUT ===
+one encounter per part per tick (edge colouring), latency = age of the record from the last contact
+  paths 3 and 3 (difference 0): receiver oscillation 0.00571 | source oscillation 0.01307 (early 0.01314) | colours 3
+  paths 3 and 4 (difference 1): receiver oscillation 0.00770 | source oscillation 0.01246 (early 0.01309) | colours 3
+  paths 3 and 5 (difference 2): receiver oscillation 0.00747 | source oscillation 0.01206 (early 0.01296) | colours 3
+  paths 3 and 6 (difference 3): receiver oscillation 0.00630 | source oscillation 0.01218 (early 0.01246) | colours 3
+  paths 3 and 7 (difference 4): receiver oscillation 0.00774 | source oscillation 0.01152 (early 0.01267) | colours 3
+  paths 3 and 8 (difference 5): receiver oscillation 0.00631 | source oscillation 0.01267 (early 0.01249) | colours 3
+  paths 3 and 9 (difference 6): receiver oscillation 0.00577 | source oscillation 0.01124 (early 0.01238) | colours 3
+  paths 3 and 10 (difference 7): receiver oscillation 0.00596 | source oscillation 0.01199 (early 0.01236) | colours 3
+source's dominant frequency: 0.1141 cycles per tick (a relation meets every 3 ticks; 1/12 = 0.0833 is a quarter-turn per meeting)
+path difference      |A|      |B|   |both|    |A+B|  phase(B/A)/pi
+              0  0.00007  0.00008  0.00290  0.00015         -0.140
+              1  0.00004  0.00006  0.00045  0.00005          0.685
+              2  0.00008  0.00003  0.00015  0.00006         -0.760
+              3  0.00014  0.00001  0.00036  0.00014          0.339
+              4  0.00014  0.00002  0.00021  0.00014         -0.549
+              5  0.00014  0.00000  0.00037  0.00015         -0.023
+              6  0.00014  0.00001  0.00031  0.00015         -0.468
+              7  0.00015  0.00002  0.00035  0.00016          0.296
+              8  0.00011  0.00001  0.00033  0.00011         -0.423
+              9  0.00012  0.00000  0.00033  0.00012          0.073
+             10  0.00014  0.00001  0.00035  0.00015          0.210
+             11  0.00014  0.00001  0.00032  0.00015         -0.293
+             12  0.00016  0.00001  0.00032  0.00016         -0.492

@@ -1,0 +1,35 @@
+import numpy as np
+from perspectival import colour, network
+# Linearize one round of the share-swap layer around a uniform state and look for a conserved quadratic
+# quantity that is a sum of local squares over parts and relations (a candidate "total probability").
+def round_fn(z,edges,col,C,n):
+    tau=np.exp(z[:n]); dl=np.exp(z[n:2*n]); E=len(edges)
+    rec={e:(0.5+z[2*n+i],0.5+z[2*n+E+i]) for i,e in enumerate(edges)}
+    for t in range(C):
+        for (u,v) in edges:
+            if col[(u,v)]!=t: continue
+            T=tau[u]+tau[v]; D=dl[u]+dl[v]; xu,yu=rec[(u,v)]; rec[(u,v)]=(tau[u]/T,dl[u]/D)
+            tau[u],tau[v]=T*yu,T*(1-yu); dl[u],dl[v]=D*xu,D*(1-xu)
+    return np.concatenate([np.log(tau),np.log(dl),[rec[e][0]-0.5 for e in edges],[rec[e][1]-0.5 for e in edges]])
+for seed,N in ((3,12),(5,20),(11,16)):
+    edges,n=network(seed,N); col,C=colour(edges); m=2*n+2*len(edges)
+    z0=np.zeros(m); f0=round_fn(z0,edges,col,C,n); J=np.zeros((m,m)); eps=1e-7
+    for i in range(m):
+        z=z0.copy(); z[i]=eps; J[:,i]=(round_fn(z,edges,col,C,n)-f0)/eps
+    # the dynamics conserves total continuity and total difference exactly; remove those directions by
+    # working with deviations from each total: keep all variables but note the two exact conservation laws
+    # Diagonal (local) quadratic form g: require J^T diag(g) J = diag(g)  -> linear equations in g
+    rows=[]
+    for a in range(m):
+        for b in range(a,m):
+            rows.append(J[:,a]*J[:,b]-(np.eye(m)[a]*np.eye(m)[b]))
+    A=np.array(rows)
+    # null space of A gives all conserved diagonal forms
+    u,s,vt=np.linalg.svd(A); null=vt[s.size:] if s.size<m else vt[np.abs(np.concatenate([s,np.zeros(m-s.size)]))<1e-8]
+    sv=np.linalg.svd(A,compute_uv=False)
+    print(f"network of {n} parts, {len(edges)} relations: smallest singular values of the conservation equations {np.round(sv[-4:],8).tolist()}")
+    g=vt[-1]; g=g/np.sign(g[np.argmax(np.abs(g))])
+    res=np.linalg.norm(J.T@np.diag(g)@J-np.diag(g))/np.linalg.norm(np.diag(g))
+    wp=g[:2*n]; wr=g[2*n:]
+    print(f"   best local form: residual {res:.2e}; weights on parts' ln(tau), ln(delta): mean {wp.mean():+.4f} (spread {wp.std():.4f}); "
+          f"on relations' remembered split: mean {wr.mean():+.4f} (spread {wr.std():.4f}); all positive: {bool((g>0).all())}")

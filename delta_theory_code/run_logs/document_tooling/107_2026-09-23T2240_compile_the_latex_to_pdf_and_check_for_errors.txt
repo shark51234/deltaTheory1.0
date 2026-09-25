@@ -1,0 +1,17 @@
+Run 107
+Time (UTC): 2026-09-23T22:40:49.156074Z
+Purpose: Compile the LaTeX to PDF and check for errors
+Working directory: scripts/part3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/part3 && sed -i 's/RMS relative rapidity, flux (start \$\\to\$ end)/RMS relative rapidity, flux, 12 parts (start $\\to$ end)/' delta_theory_part3.tex && grep -n "RMS relative" delta_theory_part3.tex && for i in 1 2; do pdflatex -interaction=nonstopmode delta_theory_part3.tex > log.txt 2>&1; done; grep -n "^!" log.txt | head; grep -c "Warning" log.txt; grep "Overfull" log.txt | head; ls -la *.pdf && python3 -c "from pypdf import PdfReader; print(len(PdfReader('delta_theory_part3.pdf').pages),'pages')"
+
+=== OUTPUT ===
+548:RMS relative rapidity, flux, 12 parts (start $\to$ end) & $0.01\to0.95$ & $0.03\to1.4$ & $0.10\to2.2$ \\
+1
+Overfull \hbox (6.91069pt too wide) in paragraph at lines 292--298
+Overfull \hbox (28.24623pt too wide) in paragraph at lines 542--551
+Overfull \hbox (111.45374pt too wide) in paragraph at lines 673--683
+-rw-r--r-- 1 root root 212631 Sep 23 22:40 delta_theory_part3.pdf
+24 pages

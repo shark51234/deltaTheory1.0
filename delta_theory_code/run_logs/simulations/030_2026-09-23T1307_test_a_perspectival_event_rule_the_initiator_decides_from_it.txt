@@ -1,0 +1,45 @@
+Run 030
+Time (UTC): 2026-09-23T13:07:39.830100Z
+Purpose: Test a perspectival event rule: the initiator decides from its own row of the matrix
+Working directory: scripts/rec
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/rec && python3 - << 'EOF'
+src=open('ab.py').read()
+old="""        w=[ti*di,tj*dj,ti*dj,tj*di]; k=random.choices(range(4),weights=w)[0]"""
+new="""        if getattr(s,'sel','pair')=='row':      # the initiator decides from its own row of the matrix
+            k=0 if random.random()<di/(di+dj) else 2
+        else:
+            w=[ti*di,tj*dj,ti*dj,tj*di]; k=random.choices(range(4),weights=w)[0]"""
+assert old in src; src=src.replace(old,new)
+src=src.replace("""def run(mode,q,seed,E=30000,N0=200,f=0.0,every=5000):
+    w=World(N0,seed,mode,f); rows=[]""","""def run(mode,q,seed,E=30000,N0=200,f=0.0,every=5000,sel='pair'):
+    w=World(N0,seed,mode,f); w.sel=sel; rows=[]""")
+src=src.replace("""    mode=sys.argv[1]; q=float(sys.argv[2]); f=float(sys.argv[3]); seeds=[int(x) for x in sys.argv[4].split(',')]; E=int(sys.argv[5])
+    for seed in seeds:
+        w,rows=run(mode,q,seed,E=E,f=f)""","""    mode=sys.argv[1]; q=float(sys.argv[2]); f=float(sys.argv[3]); seeds=[int(x) for x in sys.argv[4].split(',')]; E=int(sys.argv[5])
+    sel=sys.argv[6] if len(sys.argv)>6 else 'pair'
+    for seed in seeds:
+        w,rows=run(mode,q,seed,E=E,f=f,sel=sel)""")
+src=src.replace("""        print(f"[{mode} q={q} f={f} s{seed}] \"""","""        print(f"[{mode}/{sel} q={q} f={f} s{seed}] \"""")
+open('ab.py','w').write(src)
+EOF
+grep -n "sel" ab.py | head; timeout 3400 bash -c 'for q in 0.8 0.9 1.0; do python3 ab.py b $q 0 1,2 30000 row; done'
+
+=== OUTPUT ===
+5:       mode 'a'   : as 'none', but the universe starts with a fraction f of itself as light
+6:       mode 'b'   : residues are stored on the relation itself (signed); nothing is void"""
+53:        if getattr(s,'sel','pair')=='row':      # the initiator decides from its own row of the matrix
+58:        if k<2 and random.random()<q:                       # a self absorbs the other
+107:def run(mode,q,seed,E=30000,N0=200,f=0.0,every=5000,sel='pair'):
+108:    w=World(N0,seed,mode,f); w.sel=sel; rows=[]
+119:    sel=sys.argv[6] if len(sys.argv)>6 else 'pair'
+121:        w,rows=run(mode,q,seed,E=E,f=f,sel=sel)
+126:        print(f"[{mode}/{sel} q={q} f={f} s{seed}] "+" | ".join(out)+f" || {w.st} tot=({w.snapshot()['tot']:.6f},{w.snapshot()['totd']:.6f})",flush=True)
+[b/row q=0.8 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=4039,L=0,giant=0.01,rem=0.198,rel=(-0.0001,-0.0009),debts=7/299 | e10000:M=8137,L=0,giant=0.00,rem=0.221,rel=(-0.0002,-0.0012),debts=11/611 | e15000:M=12185,L=0,giant=0.00,rem=0.230,rel=(-0.0007,-0.0018),debts=24/944 | e20000:M=16289,L=0,giant=0.00,rem=0.239,rel=(-0.0006,-0.0021),debts=25/1173 | e25000:M=20555,L=0,giant=0.00,rem=0.242,rel=(-0.0007,-0.0020),debts=27/1448 | e30000:M=24709,L=0,giant=0.00,rem=0.247,rel=(-0.0008,-0.0024),debts=37/1714 || {'births': 34626, 'deaths': 10115, 'stale': 139, 'void': 0, 'blocked': 1, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b/row q=0.8 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=4166,L=0,giant=0.01,rem=0.207,rel=(-0.0010,-0.0015),debts=10/264 | e10000:M=8267,L=0,giant=0.00,rem=0.228,rel=(-0.0026,-0.0009),debts=12/590 | e15000:M=12390,L=0,giant=0.00,rem=0.233,rel=(-0.0019,-0.0016),debts=16/828 | e20000:M=16484,L=0,giant=0.00,rem=0.239,rel=(-0.0019,-0.0018),debts=19/1169 | e25000:M=20666,L=0,giant=0.00,rem=0.245,rel=(-0.0021,-0.0015),debts=28/1454 | e30000:M=24734,L=0,giant=0.00,rem=0.250,rel=(-0.0021,-0.0015),debts=37/1723 || {'births': 34618, 'deaths': 10082, 'stale': 169, 'void': 0, 'blocked': 3, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b/row q=0.9 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=4008,L=0,giant=0.01,rem=0.211,rel=(-0.0020,+0.0032),debts=7/131 | e10000:M=8112,L=0,giant=0.01,rem=0.236,rel=(-0.0039,+0.0030),debts=11/275 | e15000:M=12185,L=0,giant=0.00,rem=0.244,rel=(-0.0041,+0.0031),debts=13/429 | e20000:M=16270,L=0,giant=0.00,rem=0.249,rel=(-0.0043,+0.0032),debts=14/575 | e25000:M=20388,L=0,giant=0.00,rem=0.254,rel=(-0.0044,+0.0032),debts=17/721 | e30000:M=24465,L=0,giant=0.00,rem=0.259,rel=(-0.0043,+0.0033),debts=19/822 || {'births': 35344, 'deaths': 11077, 'stale': 44, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b/row q=0.9 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=4068,L=0,giant=0.00,rem=0.215,rel=(+0.0004,-0.0016),debts=3/125 | e10000:M=8208,L=0,giant=0.00,rem=0.231,rel=(-0.0002,-0.0013),debts=4/239 | e15000:M=12147,L=0,giant=0.00,rem=0.244,rel=(-0.0004,-0.0014),debts=8/386 | e20000:M=16273,L=0,giant=0.00,rem=0.253,rel=(-0.0004,-0.0014),debts=11/509 | e25000:M=20419,L=0,giant=0.00,rem=0.259,rel=(-0.0004,-0.0014),debts=12/660 | e30000:M=24392,L=0,giant=0.00,rem=0.263,rel=(-0.0005,-0.0014),debts=15/794 || {'births': 35348, 'deaths': 11154, 'stale': 39, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b/row q=1.0 f=0.0 s1] e0:M=200,L=0,giant=0.01,rem=0.060,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=3900,L=0,giant=0.00,rem=0.228,rel=(+0.0000,+0.0000),debts=0/0 | e10000:M=7834,L=0,giant=0.00,rem=0.251,rel=(+0.0000,+0.0000),debts=0/0 | e15000:M=11678,L=0,giant=0.00,rem=0.262,rel=(+0.0000,+0.0000),debts=0/0 | e20000:M=15747,L=0,giant=0.00,rem=0.273,rel=(+0.0000,+0.0000),debts=0/0 | e25000:M=19951,L=0,giant=0.00,rem=0.280,rel=(+0.0000,+0.0000),debts=0/0 | e30000:M=24011,L=0,giant=0.00,rem=0.283,rel=(+0.0000,+0.0000),debts=0/0 || {'births': 35876, 'deaths': 12063, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[b/row q=1.0 f=0.0 s2] e0:M=200,L=0,giant=0.01,rem=0.049,rel=(+0.0000,+0.0000),debts=0/0 | e5000:M=3966,L=0,giant=0.01,rem=0.217,rel=(+0.0000,+0.0000),debts=0/0 | e10000:M=7948,L=0,giant=0.00,rem=0.246,rel=(+0.0000,+0.0000),debts=0/0 | e15000:M=12155,L=0,giant=0.00,rem=0.256,rel=(+0.0000,+0.0000),debts=0/0 | e20000:M=16326,L=0,giant=0.00,rem=0.269,rel=(+0.0000,+0.0000),debts=0/0 | e25000:M=20404,L=0,giant=0.00,rem=0.278,rel=(+0.0000,+0.0000),debts=0/0 | e30000:M=24599,L=0,giant=0.00,rem=0.286,rel=(+0.0000,+0.0000),debts=0/0 || {'births': 36268, 'deaths': 11867, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)

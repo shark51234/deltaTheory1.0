@@ -1,0 +1,50 @@
+Run 121
+Time (UTC): 2026-09-24T03:06:46.402104Z
+Purpose: Check whether the new vanishing rule changes the network's space: dimension by reach and the giants' role
+Working directory: scripts/ticks
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/ticks && cat > space_check.py << 'EOF'
+import numpy as np, sys
+from collections import deque
+sys.path.insert(0,'.')
+from vanish import Vanishing
+# Does vanishing-as-an-act change "space"? Compare the relation network of the old rule (absorb) and the new
+# rule (vanish) at the same size: ball growth (dimension seen at reach r), and what happens without the giants.
+def grow(seed,mode,N):
+    w=Vanishing(200,seed,'clock_delta',mode=mode)
+    while w.alive.sum()<N and len(w.free)>500: w.step()
+    return w
+def balls(w,nodes,src,block=set(),R=8):
+    out=[]
+    for s in src:
+        dist={s:0}; q=deque([s]); cnt=np.zeros(R+1)
+        while q:
+            u=q.popleft(); d=dist[u]
+            if d>=R: continue
+            for v in w.nb[u]:
+                if v not in dist and v not in block: dist[v]=d+1; q.append(v)
+        for d in dist.values(): cnt[d]+=1
+        out.append(np.cumsum(cnt))
+    return np.array(out),dist
+for mode in ('absorb','vanish'):
+    for seed in (1,2):
+        w=grow(seed,mode,30000); nodes=np.flatnonzero(w.alive); eta=np.sqrt(w.t[nodes]*w.d[nodes]); tot=eta.sum()
+        giants=set(nodes[eta>0.01*tot].tolist()); rng=np.random.default_rng(seed)
+        src=[int(x) for x in rng.choice([k for k in nodes if k not in giants],40,replace=False)]
+        B,_=balls(w,nodes,src); m=B.mean(0)
+        D=[np.log(m[r+1]/m[r])/np.log((r+1)/r) for r in range(1,6)]
+        # reach without the giants: how much of the universe a typical part can still get to
+        Bg,_=balls(w,nodes,src[:10],block=giants,R=60); frac=np.mean([b[-1] for b in Bg])/len(nodes)
+        deg=np.mean([len(w.nb[k]) for k in nodes])
+        print(f"{mode:6s} seed {seed}: N={len(nodes)} giants {len(giants)} (largest {eta.max()/tot:.3f}) mean degree {deg:.1f} | "
+              f"ball growth dimension at r=1..5: {np.round(D,1).tolist()} | reachable without giants {frac:.1%}",flush=True)
+EOF
+timeout 3000 python3 space_check.py
+
+=== OUTPUT ===
+absorb seed 1: N=30000 giants 5 (largest 0.437) mean degree 3.5 | ball growth dimension at r=1..5: [1.9, 2.7, 4.7, 6.2, 6.4] | reachable without giants 2.6%
+absorb seed 2: N=30001 giants 13 (largest 0.360) mean degree 3.5 | ball growth dimension at r=1..5: [2.0, 3.1, 4.8, 5.5, 5.4] | reachable without giants 2.2%
+vanish seed 1: N=30000 giants 18 (largest 0.063) mean degree 3.5 | ball growth dimension at r=1..5: [1.9, 2.7, 4.2, 5.3, 5.2] | reachable without giants 3.9%
+vanish seed 2: N=30001 giants 21 (largest 0.077) mean degree 3.5 | ball growth dimension at r=1..5: [1.9, 2.6, 4.1, 4.5, 4.8] | reachable without giants 8.5%

@@ -1,0 +1,18 @@
+Run 130
+Time (UTC): 2026-09-25T03:28:00
+Purpose: Polarity (magnetism) test, final version with rapidity relative to the parts own totals (magnet/polarity.py)
+Working directory: scripts/magnet
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/magnet && python3 polarity.py vanish 2,4,5,8 > v.out; python3 polarity.py absorb 17,24,32,37
+
+=== OUTPUT ===
+[absorb s17] 526 bound pairs at 2,500 parts -> after 8,000 events: opposite: 8 pairs, still bound 38%, merged 0%, sign kept 100% | same: 518 pairs, still bound 5%, merged 1%, sign kept 88% || polarity kept: bound members 99%, others 98%
+[absorb s24] 527 bound pairs at 2,500 parts -> after 8,000 events: opposite: 56 pairs, still bound 12%, merged 2%, sign kept 86% | same: 471 pairs, still bound 4%, merged 1%, sign kept 90% || polarity kept: bound members 79%, others 80%
+[absorb s32] 525 bound pairs at 2,500 parts -> after 8,000 events: opposite: 7 pairs, still bound 29%, merged 0%, sign kept 100% | same: 518 pairs, still bound 6%, merged 1%, sign kept 86% || polarity kept: bound members 95%, others 94%
+[absorb s37] 497 bound pairs at 2,500 parts -> after 8,000 events: opposite: 20 pairs, still bound 20%, merged 0%, sign kept 100% | same: 477 pairs, still bound 5%, merged 2%, sign kept 95% || polarity kept: bound members 93%, others 91%
+[vanish s2] 419 bound pairs at 2,500 parts -> after 8,000 events: opposite: 7 pairs, still bound 29%, merged 0%, sign kept 100% | same: 412 pairs, still bound 7%, merged 0%, sign kept 87% || polarity kept: bound members 98%, others 97%
+[vanish s4] 357 bound pairs at 2,500 parts -> after 8,000 events: opposite: 21 pairs, still bound 19%, merged 0%, sign kept 100% | same: 336 pairs, still bound 5%, merged 0%, sign kept 72% || polarity kept: bound members 96%, others 94%
+[vanish s5] 422 bound pairs at 2,500 parts -> after 8,000 events: opposite: 26 pairs, still bound 0%, merged 0%, sign kept 0% | same: 396 pairs, still bound 5%, merged 0%, sign kept 68% || polarity kept: bound members 91%, others 90%
+[vanish s8] 419 bound pairs at 2,500 parts -> after 8,000 events: same: 419 pairs, still bound 8%, merged 0%, sign kept 75% || polarity kept: bound members 100%, others 100%

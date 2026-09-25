@@ -1,0 +1,23 @@
+Run 018
+Time (UTC): 2026-09-23T10:34:18.756818Z
+Purpose: Make the numerical tags visible in box titles, keep plain-words boxes whole, recompile
+Working directory: scripts/delta
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/delta && python3 - << 'EOF'
+p='delta_theory_mathematics.tex'
+s=open(p).read()
+n=s.count(r"\hfill\Numerical}")
+s=s.replace(r"\hfill\Numerical}", r"\hfill{\footnotesize[numerical]}}")
+s=s.replace(r"""\newtcolorbox{plainbox}{enhanced,breakable,colback=blue!3""", r"""\newtcolorbox{plainbox}{enhanced,colback=blue!3""")
+open(p,'w').write(s); print("tags fixed:",n)
+EOF
+for i in 1 2; do pdflatex -interaction=nonstopmode -halt-on-error delta_theory_mathematics.tex > build5.log 2>&1; done; echo "exit: $?"; grep -E "Overfull|LaTeX Warning|^!" build5.log | head; pdfinfo delta_theory_mathematics.pdf | grep Pages; for pg in $(seq 1 36); do t=$(pdftotext -f $pg -l $pg delta_theory_mathematics.pdf - 2>/dev/null | grep -c -E "Figure (7.1|9.1)"); [ "$t" != "0" ] && echo "figure on pdf page $pg"; done
+
+=== OUTPUT ===
+tags fixed: 8
+exit: 0
+Pages:           35
+figure on pdf page 25
+figure on pdf page 29

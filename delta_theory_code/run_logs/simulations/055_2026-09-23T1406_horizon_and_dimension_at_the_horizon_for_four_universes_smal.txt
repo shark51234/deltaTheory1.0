@@ -1,0 +1,14 @@
+Run 055
+Time (UTC): 2026-09-23T14:06:18.117611Z
+Purpose: Horizon and dimension at the horizon for four universes, smaller size
+Working directory: scripts/horizon
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/horizon && timeout 3400 bash -c 'for s in 1001 1005 1012 1023; do python3 horizon2.py run $s 2500 60000 2>/dev/null; done'
+
+=== OUTPUT ===
+seed 1001, start 2500 -> N=10832: neighbour difference 2.06; median error (coverage) ; horizon r*=beyond measured range; dimension seen at r*=n/a; local dimension r=1..4: [nan, nan, nan, nan]
+seed 1005, start 2500 -> N=9598: neighbour difference 2.08; median error (coverage) ; horizon r*=beyond measured range; dimension seen at r*=n/a; local dimension r=1..4: [nan, nan, nan, nan]
+seed 1012, start 2500 -> N=10994: neighbour difference 2.08; median error (coverage) ; horizon r*=beyond measured range; dimension seen at r*=n/a; local dimension r=1..4: [2.72, 3.05, 2.43, 2.13]
+seed 1023, start 2500 -> N=10871: neighbour difference 2.04; median error (coverage) r3:0.62(14%) r4:0.62(5%) r5:0.76(1%); horizon r*=beyond measured range; dimension seen at r*=n/a; local dimension r=1..4: [2.51, 3.91, 4.58, 4.15]

@@ -1,0 +1,35 @@
+Run 111
+Time (UTC): 2026-09-24T02:41:43.326519Z
+Purpose: More universes: does the desynchronisation (motion remainder) fall as the universe ages?
+Working directory: scripts/ticks
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/ticks && cat > clocks2.py << 'EOF'
+import numpy as np, sys
+sys.path.insert(0,'/home/claude/activity'); sys.path.insert(0,'.')
+from clocks import Clocked
+# desynchronisation R = 1 - sum(eta) over the life of more universes; and how many clocks stop (absorbed parts)
+for seed in (4,5,6,7):
+    w=Clocked(200,seed,'clock_delta'); Rs=[]
+    for e in range(400001):
+        if e%100000==0:
+            idx=np.flatnonzero(w.alive); Rs.append((len(idx),1-np.sqrt(w.t[idx]*w.d[idx]).sum()))
+        if w.alive.sum()<2 or len(w.free)<500: break
+        w.step()
+    print(f"seed {seed}: " + "  ".join(f"N={n} R={r:.4f}" for n,r in Rs) + f"  | births {w.c['births']} deaths(stopped clocks) {w.c['deaths']}",flush=True)
+EOF
+sed -i 's/^for seed in (1,2,3):/if __name__=="__main__":\n  for seed in (1,2,3):/' clocks.py && python3 - << 'EOF'
+# re-indent the main block of clocks.py so it can be imported
+src=open('/home/claude/ticks/clocks.py').read()
+head,body=src.split('if __name__=="__main__":\n')
+lines=body.split('\n'); out=[lines[0]]+['  '+l if l.strip() else l for l in lines[1:]]
+open('/home/claude/ticks/clocks.py','w').write(head+'if __name__=="__main__":\n'+'\n'.join(out))
+EOF
+timeout 3000 python3 clocks2.py
+
+=== OUTPUT ===
+seed 4: N=200 R=0.0528  N=13995 R=0.0228  N=28712 R=0.0197  N=42807 R=0.0157  N=56719 R=0.0156  | births 257189 deaths(stopped clocks) 200671
+seed 5: N=200 R=0.0574  N=13772 R=0.0188  N=26852 R=0.0115  N=40928 R=0.0101  N=55272 R=0.0076  | births 256217 deaths(stopped clocks) 201146
+seed 6: N=200 R=0.0606  N=12844 R=0.0121  N=27241 R=0.0096  N=40433 R=0.0096  N=53197 R=0.0094  | births 255015 deaths(stopped clocks) 202019
+seed 7: N=200 R=0.0648  N=14591 R=0.0073  N=27205 R=0.0055  N=39736 R=0.0041  N=53026 R=0.0038  | births 254804 deaths(stopped clocks) 201979

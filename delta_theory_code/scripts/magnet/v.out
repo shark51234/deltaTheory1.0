@@ -1,0 +1,4 @@
+[vanish s2] 419 bound pairs at 2,500 parts -> after 8,000 events: opposite: 7 pairs, still bound 29%, merged 0%, sign kept 100% | same: 412 pairs, still bound 7%, merged 0%, sign kept 87% || polarity kept: bound members 98%, others 97%
+[vanish s4] 357 bound pairs at 2,500 parts -> after 8,000 events: opposite: 21 pairs, still bound 19%, merged 0%, sign kept 100% | same: 336 pairs, still bound 5%, merged 0%, sign kept 72% || polarity kept: bound members 96%, others 94%
+[vanish s5] 422 bound pairs at 2,500 parts -> after 8,000 events: opposite: 26 pairs, still bound 0%, merged 0%, sign kept 0% | same: 396 pairs, still bound 5%, merged 0%, sign kept 68% || polarity kept: bound members 91%, others 90%
+[vanish s8] 419 bound pairs at 2,500 parts -> after 8,000 events: same: 419 pairs, still bound 8%, merged 0%, sign kept 75% || polarity kept: bound members 100%, others 100%

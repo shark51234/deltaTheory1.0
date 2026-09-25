@@ -1,0 +1,48 @@
+Run 082
+Time (UTC): 2026-09-23T21:45:58.997958Z
+Purpose: Single outcomes: when and where does the spread quantum reconcentrate into a full halving, versus its squared-amplitude map?
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && cat > outcomes.py << 'EOF'
+import numpy as np
+from perspectival import colour
+M=10; edges=[(k,(k+1)%M) for k in range(M)]; col,C=colour(edges); unit=np.log(2)
+def trial(seed,maxr=20000,noise=1e-3,src=0):
+    rng=np.random.default_rng(seed)
+    tau=np.exp(noise*rng.normal(size=M)); dl=np.exp(noise*rng.normal(size=M))
+    tau[src]*=np.sqrt(2); dl[src]/=np.sqrt(2)
+    rel={(u,v):(tau[u]/(tau[u]+tau[v]),dl[u]/(dl[u]+dl[v])) for (u,v) in edges}
+    T0,D0=tau.sum(),dl.sum(); dens=np.zeros(M)
+    for r in range(maxr):
+        for t in range(C):
+            for (u,v) in edges:
+                if col[(u,v)]!=t: continue
+                T=tau[u]+tau[v]; D=dl[u]+dl[v]; xu,yu=rel[(u,v)]; rel[(u,v)]=(tau[u]/T,dl[u]/D)
+                tau[u],tau[v]=T*yu,T*(1-yu); dl[u],dl[v]=D*xu,D*(1-xu)
+        lt=np.log(tau/(T0/M)); ld=np.log(dl/(D0/M)); dev=np.abs(lt)+np.abs(ld); dens+=lt**2+ld**2
+        if r>=10 and dev.max()>=unit: return int(dev.argmax()),r,dens/dens.sum()
+    return None,maxr,dens/dens.sum()
+outs=[]; shares=[]; times=[]
+for s in range(300):
+    k,r,sh=trial(s)
+    if k is not None: outs.append(k); times.append(r)
+    shares.append(sh)
+outs=np.array(outs); freq=np.bincount(outs,minlength=M)/len(outs); share=np.mean(shares,axis=0)
+print(f"{len(outs)} of 300 trials produced an event (a full halving concentrated at one member); median wait {np.median(times):.0f} rounds")
+print("member:                    ",list(range(M)))
+print("share of events:           ",np.round(freq,3).tolist())
+print("squared-amplitude share:   ",np.round(share,3).tolist())
+chi=np.sum((freq-share)**2/share)*len(outs)
+print(f"correlation between event frequency and squared-amplitude share: {np.corrcoef(freq,share)[0,1]:.3f}; chi-square {chi:.1f} on {M-1} degrees of freedom")
+EOF
+timeout 1500 python3 outcomes.py 2>/dev/null | tail -6
+
+=== OUTPUT ===
+spread 1.00 perspectival : valid for 3000 rounds; rapidity spread 9.205, size spread 0.679, largest relation state 203459751.17 x typical part, conservation error 5.7e-07
+300 of 300 trials produced an event (a full halving concentrated at one member); median wait 176 rounds
+member:                     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+share of events:            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+squared-amplitude share:    [0.184, 0.061, 0.119, 0.053, 0.12, 0.114, 0.115, 0.056, 0.113, 0.065]
+correlation between event frequency and squared-amplitude share: 0.714; chi-square 1334.2 on 9 degrees of freedom

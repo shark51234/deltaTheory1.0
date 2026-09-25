@@ -1,0 +1,47 @@
+Run 038
+Time (UTC): 2026-09-23T13:34:13.897615Z
+Purpose: Relational death shared among all neighbours instead of given to the strongest one
+Working directory: scripts/death
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/death && python3 - << 'EOF'
+src=open('causal.py').read()
+old="""            a=max(s.nb[f],key=lambda m:s.t[m])          # its strongest registrant takes it in
+            nbrs=set(s.nb[f])
+            s.absorb(a,f); s.c['deaths']-=1; s.c['reldeaths']+=1
+            queue|=nbrs; queue.add(a)"""
+new="""            nbrs=list(s.nb[f])
+            if getattr(s,'spread',False):
+                # every neighbour takes in the share of f it registers (proportional to its continuity); the neighbours become related
+                tot=sum(s.t[a] for a in nbrs)
+                for a in nbrs:
+                    wa=s.t[a]/tot; s.t[a]+=wa*s.t[f]; s.d[a]+=wa*s.d[f]; s.nb[a].discard(f)
+                for x in range(len(nbrs)):
+                    for y in range(x+1,len(nbrs)): s.link(nbrs[x],nbrs[y])
+                s.nb[f]=set(); s.alive[f]=False; s.free.append(f); s.life.append(s.e-s.born[f]); s.c['reldeaths']+=1
+            else:
+                a=max(nbrs,key=lambda m:s.t[m])          # its strongest registrant takes it in
+                s.absorb(a,f); s.c['deaths']-=1; s.c['reldeaths']+=1
+            queue|=set(nbrs)"""
+assert old in src; src=src.replace(old,new)
+src=src.replace("inertia='inertia' in sys.argv[4:]; reldeath='reldeath' in sys.argv[4:]","inertia='inertia' in sys.argv[4:]; reldeath=('reldeath' in sys.argv[4:]) or ('spread' in sys.argv[4:]); spread='spread' in sys.argv[4:]")
+src=src.replace("w.inertia=inertia; w.reldeath=reldeath; out=[]","w.inertia=inertia; w.reldeath=reldeath; w.spread=spread; out=[]")
+src=src.replace("{'+reldeath' if reldeath else ''}","{'+reldeath' if reldeath and not spread else ''}{'+spread-death' if spread else ''}")
+open('causal.py','w').write(src)
+EOF
+timeout 3000 bash -c 'python3 causal.py oneway 1,2 60000 inertia spread 2>/dev/null; python3 causal.py selves 1,2 60000 inertia spread 2>/dev/null'
+
+=== OUTPUT ===
+[oneway+inertia+spread-death s1] spacelike share=0.43 births=192 deaths=103 relational deaths=288 median life=40
+    e0: N=200, R=0.060, largest=0.009, top10=0.086, parts>1%=0, span=10^0.28, tail=nan
+    COLLAPSED at e253
+[oneway+inertia+spread-death s2] spacelike share=0.48 births=216 deaths=87 relational deaths=328 median life=26
+    e0: N=200, R=0.049, largest=0.009, top10=0.088, parts>1%=0, span=10^0.29, tail=nan
+    COLLAPSED at e257
+[selves+inertia+spread-death s1] spacelike share=0.43 births=495 deaths=204 relational deaths=490 median life=41
+    e0: N=200, R=0.060, largest=0.009, top10=0.086, parts>1%=0, span=10^0.28, tail=nan
+    COLLAPSED at e575
+[selves+inertia+spread-death s2] spacelike share=0.43 births=338 deaths=138 relational deaths=399 median life=26
+    e0: N=200, R=0.049, largest=0.009, top10=0.088, parts>1%=0, span=10^0.29, tail=nan
+    COLLAPSED at e391

@@ -1,0 +1,19 @@
+Run 060
+Time (UTC): 2026-09-23T14:13:18.680946Z
+Purpose: Measure binding in three universes where parts act on records
+Working directory: scripts/binding
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/binding && timeout 3000 bash -c 'for s in 1005 1018 1030; do python3 bind.py $s rec 1000,4000,10000 2>/dev/null; done'
+
+=== OUTPUT ===
+seed 1005 records: N=1000 relations=1731 | carrying a state 413 (debts 249) | bound pairs 219 (12.7% of relations), median binding 9.4% of the pair's free mass | blocked mergers 17 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1005 records: N=4001 relations=6940 | carrying a state 1611 (debts 982) | bound pairs 842 (12.1% of relations), median binding 9.1% of the pair's free mass | blocked mergers 110 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1005 records: N=10001 relations=17152 | carrying a state 4005 (debts 2418) | bound pairs 2056 (12.0% of relations), median binding 7.8% of the pair's free mass | blocked mergers 245 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1018 records: N=1000 relations=1725 | carrying a state 388 (debts 243) | bound pairs 210 (12.2% of relations), median binding 8.3% of the pair's free mass | blocked mergers 26 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1018 records: N=4000 relations=6957 | carrying a state 1589 (debts 930) | bound pairs 810 (11.6% of relations), median binding 8.8% of the pair's free mass | blocked mergers 102 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1018 records: N=10000 relations=17256 | carrying a state 3978 (debts 2384) | bound pairs 2058 (11.9% of relations), median binding 8.2% of the pair's free mass | blocked mergers 208 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1030 records: N=1001 relations=1764 | carrying a state 396 (debts 248) | bound pairs 210 (11.9% of relations), median binding 8.8% of the pair's free mass | blocked mergers 22 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1030 records: N=4000 relations=6889 | carrying a state 1614 (debts 975) | bound pairs 827 (12.0% of relations), median binding 7.8% of the pair's free mass | blocked mergers 96 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000
+seed 1030 records: N=10001 relations=17205 | carrying a state 3903 (debts 2384) | bound pairs 2049 (11.9% of relations), median binding 8.5% of the pair's free mass | blocked mergers 248 | conservation: sum(tau)=1.000000, sum(delta)+relations=1.000000

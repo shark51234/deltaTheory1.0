@@ -1,0 +1,38 @@
+Run 108
+Time (UTC): 2026-09-23T22:40:57.109456Z
+Purpose: Fix the overfull tables, recompile, and copy outputs
+Working directory: scripts/part3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/part3 && python3 - << 'EOF'
+p='delta_theory_part3.tex'; s=open(p).read()
+s=s.replace(r"""\begin{tabular}{lccccc}
+\toprule
+Size spread""",r"""\small\begin{tabular}{lccccc}
+\toprule
+Size spread""")
+s=s.replace(r"Growth of a tiny disturbance in 1{,}000 rounds &",r"Disturbance growth, 1{,}000 rounds &")
+s=s.replace(r"""\begin{tabular}{lccc}
+\toprule
+& $s=0.003$""",r"""\small\begin{tabular}{lccc}
+\toprule
+& $s=0.003$""")
+s=s.replace(r"Mean log-size change, flux (12 / 20 parts)",r"Mean log-size change, flux (12/20 parts)")
+s=s.replace(r"RMS relative rapidity, flux, 12 parts (start $\to$ end)",r"RMS rel.\ rapidity, flux, 12 parts")
+s=s.replace(r"""\begin{tabular}{lcccc}
+\toprule
+Composite & Parts & Energy reaching $B$ & Mismatch, common turn & Mismatch, $A$ alone \\""",r"""\small\begin{tabular}{llccc}
+\toprule
+Composite & Parts & Energy to $B$ & Common turn & $A$ alone \\""")
+s=s.replace(r"Ring & 8 / 16 / 32 / 64 / 128 & 0.88--0.92 & 91 / 61 / 50 / 35 / 25\% & 187--191\% \\",r"Ring & 8/16/32/64/128 & 0.88--0.92 & 91/61/50/35/25\% & 187--191\% \\")
+s=s.replace(r"Random network & 12 / 24 / 48 / 96 / 192 & 0.91--0.97 & 68 / 31 / 27 / 15 / 13\% & 190--196\% \\",r"Network & 12/24/48/96/192 & 0.91--0.97 & 68/31/27/15/13\% & 190--196\% \\")
+s=s.replace(r"""and weight at the joining member:
+\begin{center}""",r"""and weight at the joining member (columns: mismatch after a common turn, and after turning $A$ alone):
+\begin{center}""")
+open(p,'w').write(s)
+EOF
+for i in 1 2; do pdflatex -interaction=nonstopmode delta_theory_part3.tex > log.txt 2>&1; done; grep -n "^!" log.txt | head; grep "Overfull" log.txt; python3 -c "from pypdf import PdfReader; print(len(PdfReader('delta_theory_part3.pdf').pages),'pages')"; cp delta_theory_part3.tex delta_theory_part3.pdf /mnt/user-data/outputs/
+
+=== OUTPUT ===
+24 pages

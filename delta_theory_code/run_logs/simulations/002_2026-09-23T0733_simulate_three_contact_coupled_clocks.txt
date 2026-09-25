@@ -1,0 +1,53 @@
+Run 002
+Time (UTC): 2026-09-23T07:33:26.372255Z
+Purpose: Simulate three contact-coupled clocks
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cat << 'EOF' > /tmp/t.py
+import math
+def h(x,w=1.0): return x*x*math.exp(-x*x/w/w)
+def run(name,t,k=0.5,D=100.0,N=400000,dn=0.01,marks=(0,1000,10000,100000,399999)):
+    print(name)
+    for n in range(N):
+        L=[math.log(v) for v in t]
+        c=[sum(h(L[i]-L[j]) for j in range(3) if j!=i) for i in range(3)]
+        e=[k*c[i]*(1-t[i]/D) for i in range(3)]
+        t=[t[i]*math.exp(e[i]*dn) for i in range(3)]
+        if n in marks:
+            x=[L[0]-L[1],L[1]-L[2],L[0]-L[2]]
+            print(f" n={n*dn:6.0f} t=({t[0]:6.2f},{t[1]:6.2f},{t[2]:6.2f}) xAB={x[0]:+.3f} xBC={x[1]:+.3f} xAC={x[2]:+.3f} eps=({e[0]:.4f},{e[1]:.4f},{e[2]:.4f})")
+run("all inside window",[40,20,10])
+run("chain: A-C out of range, B in middle",[60,8,1])
+run("pair + distant third",[40,20,0.5])
+# two-clock baseline for chain ends
+def run2(name,t,k=0.5,D=100.0,N=400000,dn=0.01):
+    for n in range(N):
+        x=math.log(t[0]/t[1]); e=[k*h(x)*(1-v/D) for v in t]
+        t=[t[i]*math.exp(e[i]*dn) for i in range(2)]
+    print(name,[round(v,2) for v in t], round(math.log(t[0]/t[1]),3))
+run2("A-C alone (baseline)",[60,1])
+EOF
+python3 /tmp/t.py
+
+=== OUTPUT ===
+all inside window
+ n=     0 t=( 40.07, 20.05, 10.03) xAB=+0.693 xBC=+0.693 xAC=+1.386 eps=(0.1735,0.2377,0.2603)
+ n=    10 t=( 90.53, 58.48, 51.55) xAB=+0.437 xBC=+0.126 xAC=+0.563 eps=(0.0185,0.0361,0.0598)
+ n=   100 t=( 99.75, 89.14, 89.03) xAB=+0.112 xBC=+0.001 xAC=+0.114 eps=(0.0000,0.0007,0.0007)
+ n=  1000 t=( 99.98, 96.78, 96.78) xAB=+0.033 xBC=+0.000 xAC=+0.033 eps=(0.0000,0.0000,0.0000)
+ n=  4000 t=(100.00, 98.41, 98.41) xAB=+0.016 xBC=+0.000 xAC=+0.016 eps=(0.0000,0.0000,0.0000)
+chain: A-C out of range, B in middle
+ n=     0 t=( 60.01,  8.00,  1.00) xAB=+2.015 xBC=+2.079 xAC=+4.094 eps=(0.0140,0.0586,0.0284)
+ n=    10 t=( 74.97, 16.70,  1.15) xAB=+1.502 xBC=+2.672 xAC=+4.174 eps=(0.0296,0.1008,0.0028)
+ n=   100 t=( 99.08, 87.92,  1.16) xAB=+0.120 xBC=+4.329 xAC=+4.448 eps=(0.0001,0.0009,0.0000)
+ n=  1000 t=( 99.76, 96.56,  1.16) xAB=+0.033 xBC=+4.422 xAC=+4.455 eps=(0.0000,0.0000,0.0000)
+ n=  4000 t=( 99.88, 98.30,  1.16) xAB=+0.016 xBC=+4.440 xAC=+4.456 eps=(0.0000,0.0000,0.0000)
+pair + distant third
+ n=     0 t=( 40.04, 20.02,  0.50) xAB=+0.693 xBC=+3.689 xAC=+4.382 eps=(0.0891,0.1189,0.0000)
+ n=    10 t=( 67.23, 43.48,  0.50) xAB=+0.436 xBC=+4.465 xAC=+4.901 eps=(0.0258,0.0444,0.0000)
+ n=   100 t=( 92.60, 82.44,  0.50) xAB=+0.116 xBC=+5.105 xAC=+5.221 eps=(0.0005,0.0012,0.0000)
+ n=  1000 t=( 97.99, 94.81,  0.50) xAB=+0.033 xBC=+5.245 xAC=+5.278 eps=(0.0000,0.0000,0.0000)
+ n=  4000 t=( 99.03, 97.44,  0.50) xAB=+0.016 xBC=+5.272 xAC=+5.289 eps=(0.0000,0.0000,0.0000)
+A-C alone (baseline) [60.04, 1.0] 4.093

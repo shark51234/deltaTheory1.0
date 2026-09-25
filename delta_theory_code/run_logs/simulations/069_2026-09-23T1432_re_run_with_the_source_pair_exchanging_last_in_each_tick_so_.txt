@@ -1,0 +1,34 @@
+Run 069
+Time (UTC): 2026-09-23T14:32:53.516361Z
+Purpose: Re-run with the source pair exchanging last in each tick, so its oscillation can leak into the relay paths
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && python3 - << 'EOF'
+import numpy as np
+exec(open('interference.py').read().split("for lat in (1,2):")[0].replace("edges=[(0,1)]; n=2","edges=[]; n=2").replace("        edges.append((p[-1],R))\n","        edges.append((p[-1],R))\n    edges.append((0,1))\n"))
+for lat in (1,2):
+    print(f"latency {lat} (source pair exchanges last in each tick):")
+    for L2 in range(3,3+2*(lat+1)+1):
+        ok,th=run(3,L2,lat)
+        if not ok: print(f"  paths 3 and {L2}: positivity broke"); continue
+        tail=th[len(th)//2:]
+        print(f"  paths 3 and {L2} (difference {L2-3}): receiver oscillation {tail.std():.5f}; mean rapidity {tail.mean():+.4f}; first-half {th[:len(th)//2].std():.5f}")
+EOF
+
+=== OUTPUT ===
+latency 1 (source pair exchanges last in each tick):
+  paths 3 and 3: positivity broke
+  paths 3 and 4: positivity broke
+  paths 3 and 5: positivity broke
+  paths 3 and 6: positivity broke
+  paths 3 and 7: positivity broke
+latency 2 (source pair exchanges last in each tick):
+  paths 3 and 3: positivity broke
+  paths 3 and 4: positivity broke
+  paths 3 and 5: positivity broke
+  paths 3 and 6: positivity broke
+  paths 3 and 7: positivity broke
+  paths 3 and 8: positivity broke
+  paths 3 and 9: positivity broke

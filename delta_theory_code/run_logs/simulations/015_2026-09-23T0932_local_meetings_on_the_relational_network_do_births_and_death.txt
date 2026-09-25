@@ -1,0 +1,75 @@
+Run 015
+Time (UTC): 2026-09-23T09:32:48.454921Z
+Purpose: Local meetings on the relational network: do births and deaths balance?
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cat << 'EOF' > /tmp/local.py
+import numpy as np, random, math, sys
+def run(start_t, start_d, edges0, E=200000, seed=1, cap=20000, every=20000, rule='R1'):
+    rng=np.random.default_rng(seed); random.seed(seed)
+    tau=np.zeros(cap); dl=np.zeros(cap); alive=np.zeros(cap,bool); born=np.zeros(cap,int)
+    nbr=[set() for _ in range(cap)]; free=list(range(cap-1,-1,-1))
+    def new(t,d,e):
+        k=free.pop(); tau[k]=t; dl[k]=d; alive[k]=True; born[k]=e; nbr[k]=set(); return k
+    ids=[new(t,d,0) for t,d in zip(start_t,start_d)]
+    for a,b in edges0: nbr[ids[a]].add(ids[b]); nbr[ids[b]].add(ids[a])
+    births=deaths=0; out=[]; plife=[]
+    for e in range(E+1):
+        idx=np.flatnonzero(alive); n=len(idx)
+        if e%every==0 or n<2 or n>cap-10:
+            eta=np.sqrt(tau[idx]*dl[idx])
+            deg=[len(nbr[k]) for k in idx]
+            out.append((e,n,births,deaths,1-eta.sum(),eta.max()/eta.sum(),max(deg),np.mean(deg)))
+            if n<2 or n>cap-10: break
+        # a part acts at a rate set by its continuity; it meets a neighbor in proportion to the neighbor's difference
+        pt=tau[idx]; i=idx[np.searchsorted(np.cumsum(pt),rng.random()*pt.sum())]
+        nb=list(nbr[i])
+        if not nb: continue
+        j=random.choices(nb,weights=[dl[k] for k in nb])[0]
+        ti,di,tj,dj=tau[i],dl[i],tau[j],dl[j]
+        w=[ti*di,tj*dj,ti*dj,tj*di]; k=random.choices(range(4),weights=w)[0]
+        if k<2 and rule in ('R1',):
+            keep,gone=(i,j) if k==0 else (j,i)
+            tau[keep]+=tau[gone]; dl[keep]+=dl[gone]
+            for m in nbr[gone]:
+                nbr[m].discard(gone)
+                if m!=keep: nbr[m].add(keep); nbr[keep].add(m)
+            nbr[keep].discard(keep); alive[gone]=False; nbr[gone]=set(); free.append(gone)
+            deaths+=1; plife.append(e-born[gone])
+        elif k<2:   # bounce
+            T=ti+tj; D=di+dj
+            tau[i],dl[i]=T*di/D, D*ti/T; tau[j],dl[j]=T*dj/D, D*tj/T
+        else:       # crossover birth on the relation (i,j); each child is related to both parents
+            tau[i],dl[i],tau[j],dl[j]=ti/2,di/2,tj/2,dj/2
+            for (t,d) in ((ti/2,dj/2),(tj/2,di/2)):
+                c=new(t,d,e); nbr[c]|={i,j}; nbr[i].add(c); nbr[j].add(c)
+            births+=2
+    return out,plife
+def ring(N,seed):
+    r=random.Random(seed); t=[r.uniform(.2,1.8) for _ in range(N)]; d=[r.uniform(.2,1.8) for _ in range(N)]
+    T=sum(t); D=sum(d); return [x/T for x in t],[x/D for x in d],[(k,(k+1)%N) for k in range(N)]
+for seed in (1,2,3):
+    t,d,ed=ring(20,seed+20)
+    out,pl=run(t,d,ed,seed=seed)
+    print(f"LOCAL R1, ring of 20, seed {seed}")
+    for e,n,b,dth,rem,top,mxd,avd in out:
+        print(f"   e={e:6d} parts={n:5d} births={b:6d} deaths={dth:6d} remainder={rem:.4f} largest share={top:.3f} maxdeg={mxd} meandeg={avd:.2f}")
+    if pl: print(f"   part lifetimes: median {np.median(pl):.0f}, mean {np.mean(pl):.0f}")
+EOF
+timeout 2400 python3 /tmp/local.py
+
+=== OUTPUT ===
+LOCAL R1, ring of 20, seed 1
+   e=     0 parts=   20 births=     0 deaths=     0 remainder=0.0620 largest share=0.097 maxdeg=2 meandeg=2.00
+   e=   349 parts=    1 births=   220 deaths=   239 remainder=-0.0000 largest share=1.000 maxdeg=0 meandeg=0.00
+   part lifetimes: median 36, mean 52
+LOCAL R1, ring of 20, seed 2
+   e=     0 parts=   20 births=     0 deaths=     0 remainder=0.0725 largest share=0.074 maxdeg=2 meandeg=2.00
+   e=   283 parts=    1 births=   176 deaths=   195 remainder=0.0000 largest share=1.000 maxdeg=0 meandeg=0.00
+   part lifetimes: median 28, mean 43
+LOCAL R1, ring of 20, seed 3
+   e=     0 parts=   20 births=     0 deaths=     0 remainder=0.0437 largest share=0.085 maxdeg=2 meandeg=2.00
+   e=   328 parts=    1 births=   206 deaths=   225 remainder=0.0000 largest share=1.000 maxdeg=0 meandeg=0.00
+   part lifetimes: median 39, mean 54

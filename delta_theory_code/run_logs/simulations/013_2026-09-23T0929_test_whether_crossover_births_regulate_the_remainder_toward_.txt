@@ -1,0 +1,50 @@
+Run 013
+Time (UTC): 2026-09-23T09:29:32.401232Z
+Purpose: Test whether crossover births regulate the remainder toward a set point
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cat << 'EOF' > /tmp/thermo.py
+import numpy as np, random, math
+def run(start, seed, cap=5000, marks=(20,100,500,1000,2000,4000)):
+    rng=np.random.default_rng(seed); random.seed(seed)
+    tau=list(start[0]); dl=list(start[1]); out=[]; mk=list(marks)
+    rem0=1-sum(math.sqrt(a*b) for a,b in zip(tau,dl))
+    out.append((len(tau),rem0))
+    while len(tau)<cap:
+        t=np.array(tau); d=np.array(dl); n=len(t)
+        while True:
+            i=rng.choice(n,p=t/t.sum()); j=rng.choice(n,p=d/d.sum())
+            if i!=j: break
+        w=[t[i]*d[i],t[j]*d[j],t[i]*d[j],t[j]*d[i]]
+        k=random.choices(range(4),weights=w)[0]
+        ti,di,tj,dj=tau[i],dl[i],tau[j],dl[j]
+        if k<2:   # bounce (elastic swap)
+            T=ti+tj; D=di+dj
+            tau[i],dl[i]=T*di/D, D*ti/T; tau[j],dl[j]=T*dj/D, D*tj/T
+        else:     # crossover birth
+            tau[i],dl[i],tau[j],dl[j]=ti/2,di/2,tj/2,dj/2
+            tau+= [ti/2,tj/2]; dl+=[dj/2,di/2]
+        if mk and len(tau)>=mk[0]:
+            out.append((len(tau),1-sum(math.sqrt(a*b) for a,b in zip(tau,dl)))); mk.pop(0)
+    return out
+def mk(N,spread,seed):
+    r=random.Random(seed); th=[r.gauss(0,spread) for _ in range(N)]; m=[r.uniform(.5,1.5) for _ in range(N)]
+    t=[a*math.exp(b) for a,b in zip(m,th)]; d=[a*math.exp(-b) for a,b in zip(m,th)]
+    T=sum(t); D=sum(d); return ([x/T for x in t],[x/D for x in d])
+for label,spread in (("cold start",0.01),("warm start",0.4),("hot start",1.5)):
+    for seed in (1,2):
+        s=mk(20,spread,seed+10)
+        o=run(s,seed)
+        print(f"{label} seed {seed}: "+"  ".join(f"N={n}:{rem:.4f}" for n,rem in o))
+EOF
+timeout 1500 python3 /tmp/thermo.py
+
+=== OUTPUT ===
+cold start seed 1: N=20:0.0001  N=20:0.0001  N=100:0.0494  N=500:0.0729  N=1000:0.0861  N=2000:0.0897  N=4000:0.0963
+cold start seed 2: N=20:0.0000  N=22:0.0006  N=100:0.0462  N=500:0.0901  N=1000:0.0911  N=2000:0.0974  N=4000:0.0997
+warm start seed 1: N=20:0.0957  N=20:0.0957  N=100:0.0897  N=500:0.0957  N=1000:0.1011  N=2000:0.0982  N=4000:0.1024
+warm start seed 2: N=20:0.0740  N=22:0.0747  N=100:0.0947  N=500:0.0924  N=1000:0.0952  N=2000:0.0978  N=4000:0.1016
+hot start seed 1: N=20:0.7158  N=22:0.5771  N=100:0.1979  N=500:0.1412  N=1000:0.1247  N=2000:0.1179  N=4000:0.1159
+hot start seed 2: N=20:0.6110  N=22:0.6116  N=100:0.2190  N=500:0.1497  N=1000:0.1301  N=2000:0.1257  N=4000:0.1197

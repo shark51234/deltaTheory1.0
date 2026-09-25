@@ -1,0 +1,19 @@
+Run 005
+Time (UTC): 2026-09-23T08:51:11.055174Z
+Purpose: Check different-kappa without delay, and mutual full uptake
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cat >> /tmp/eta.py << 'EOF'
+print()
+for c in [("diff kappa, no delay",.3,.3,.1,.4,0,0),("both kappa=1, no delay",.3,.3,1,1,0,0)]:
+    name,wa,wb,ka,kb,l1,l2=c
+    r=run(wa,wb,ka,kb,l1,l2)
+    print(f"{name:26s} {r[0]:.2e} {r[1]:.2e} {r[2]:.2e} {r[3]:.3f}    {r[4]:+.4f}")
+EOF
+python3 /tmp/eta.py | tail -2
+
+=== OUTPUT ===
+diff kappa, no delay       8.82e-01 8.82e-01 0.00e+00 0.000    +0.3000
+both kappa=1, no delay     9.00e-01 8.54e-01 3.16e-01 0.180    -0.0588

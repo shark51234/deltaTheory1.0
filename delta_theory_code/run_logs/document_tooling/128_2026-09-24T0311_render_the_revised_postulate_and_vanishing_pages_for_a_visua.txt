@@ -1,0 +1,19 @@
+Run 128
+Time (UTC): 2026-09-24T03:11:20.795280Z
+Purpose: Render the revised postulate and vanishing pages for a visual check
+Working directory: scripts/ed3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/ed3 && rm -f d-*.png && pdftoppm -r 55 -png -f 11 -l 11 delta_theory_mathematics_3rd.pdf d && pdftoppm -r 55 -png -f 62 -l 64 delta_theory_mathematics_3rd.pdf d && python3 -c "
+from PIL import Image, glob
+" 2>/dev/null; python3 -c "
+from PIL import Image; import glob
+fs=sorted(glob.glob('d-*.png')); ims=[Image.open(f) for f in fs]
+w=sum(i.width for i in ims); h=max(i.height for i in ims)
+c=Image.new('RGB',(w,h),'white'); x=0
+for i in ims: c.paste(i,(x,0)); x+=i.width
+c.save('check2.png'); print(fs)"
+
+=== OUTPUT ===
+['d-11.png', 'd-62.png', 'd-63.png', 'd-64.png']

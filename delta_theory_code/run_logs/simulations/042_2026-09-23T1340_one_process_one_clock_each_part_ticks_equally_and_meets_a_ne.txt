@@ -1,0 +1,83 @@
+Run 042
+Time (UTC): 2026-09-23T13:40:01.850507Z
+Purpose: One process, one clock: each part ticks equally and meets a neighbour weighted by cosh of relative rapidity
+Working directory: scripts/activity
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/activity && python3 - << 'EOF'
+src=open('derived.py').read()
+old="""    def step(s):
+        a=s.ea[:s.ne]; b=s.eb[:s.ne]"""
+new="""    def step(s):
+        if s.v.startswith('clock'):
+            # one process, one clock: every part ticks at the same proper rate (optionally dilated by 1/cosh theta as seen by the whole);
+            # at each tick it meets a neighbour in proportion to the rate that neighbour's ticks reach it, cosh(theta_i - theta_j)
+            idx=np.flatnonzero(s.alive)
+            if s.v=='clock_dilated':
+                th_i=0.5*np.log(s.t[idx]/s.d[idx]); p=1/np.cosh(th_i); i=int(idx[np.searchsorted(np.cumsum(p),s.r.random()*p.sum())])
+            else:
+                i=int(idx[s.r.integers(len(idx))])
+            nb=list(s.nb[i])
+            if not nb: s.e+=1; return
+            thi=0.5*np.log(s.t[i]/s.d[i]); wts=[np.cosh(thi-0.5*np.log(s.t[m]/s.d[m])) for m in nb]
+            j=random.choices(nb,weights=wts)[0]
+            s.event(i,j); return
+        a=s.ea[:s.ne]; b=s.eb[:s.ne]"""
+assert old in src; src=src.replace(old,new)
+old2="""        if random.random()<0.5: i,j=j,i
+        ti,di,tj,dj=s.t[i],s.d[i],s.t[j],s.d[j]"""
+new2="""        if random.random()<0.5: i,j=j,i
+        s.event(i,j)
+    def event(s,i,j):
+        ti,di,tj,dj=s.t[i],s.d[i],s.t[j],s.d[j]"""
+assert old2 in src; src=src.replace(old2,new2)
+src=src.replace("""            if s.v=='oneway':
+                if random.random()<s.d[dom]/(s.d[dom]+s.d[sub]): s.absorb(dom,sub)""","""            if s.v in ('oneway','clock','clock_dilated'):
+                if random.random()<s.d[dom]/(s.d[dom]+s.d[sub]): s.absorb(dom,sub)""")
+src=src.replace("print(f\"[{variant}, derived activity, s{seed}]","print(f\"[{variant}, s{seed}]")
+open('derived.py','w').write(src)
+EOF
+timeout 3400 bash -c 'python3 derived.py clock 1,2,3 60000 2>/dev/null; python3 derived.py clock_dilated 1,2 60000 2>/dev/null'
+
+=== OUTPUT ===
+[clock, s1] spacelike share=0.35 births=37166 deaths=30954
+    e0: N=200 largest=0.009 top10=0.086 parts>1%=0 between-giants=1.000 local contrast(25/50/75)=[-0.16  0.01  0.12] R=0.060
+    e10000: N=1305 largest=0.194 top10=0.855 parts>1%=10 between-giants=0.145 local contrast(25/50/75)=[-0.47 -0.11  0.15] R=0.050
+    e20000: N=2582 largest=0.244 top10=0.940 parts>1%=10 between-giants=0.060 local contrast(25/50/75)=[-0.55 -0.15  0.13] R=0.021
+    e30000: N=3540 largest=0.251 top10=0.936 parts>1%=11 between-giants=0.051 local contrast(25/50/75)=[-0.49 -0.15  0.13] R=0.034
+    e40000: N=4311 largest=0.249 top10=0.940 parts>1%=10 between-giants=0.060 local contrast(25/50/75)=[-0.49 -0.15  0.15] R=0.025
+    e50000: N=5201 largest=0.248 top10=0.978 parts>1%=8 between-giants=0.031 local contrast(25/50/75)=[-0.5  -0.15  0.15] R=0.016
+    e60000: N=6413 largest=0.250 top10=0.957 parts>1%=7 between-giants=0.067 local contrast(25/50/75)=[-0.5  -0.15  0.15] R=0.026
+[clock, s2] spacelike share=0.36 births=37365 deaths=30658
+    e0: N=200 largest=0.009 top10=0.088 parts>1%=0 between-giants=1.000 local contrast(25/50/75)=[-0.17  0.    0.13] R=0.049
+    e10000: N=1658 largest=0.171 top10=0.671 parts>1%=15 between-giants=0.262 local contrast(25/50/75)=[-0.53 -0.15  0.15] R=0.051
+    e20000: N=2490 largest=0.303 top10=0.841 parts>1%=13 between-giants=0.119 local contrast(25/50/75)=[-0.48 -0.12  0.16] R=0.053
+    e30000: N=3708 largest=0.479 top10=0.947 parts>1%=6 between-giants=0.073 local contrast(25/50/75)=[-0.51 -0.15  0.15] R=0.014
+    e40000: N=5057 largest=0.430 top10=0.958 parts>1%=6 between-giants=0.060 local contrast(25/50/75)=[-0.5  -0.14  0.14] R=0.047
+    e50000: N=6039 largest=0.228 top10=0.821 parts>1%=15 between-giants=0.107 local contrast(25/50/75)=[-0.5  -0.14  0.15] R=0.060
+    e60000: N=6906 largest=0.235 top10=0.827 parts>1%=15 between-giants=0.118 local contrast(25/50/75)=[-0.51 -0.14  0.15] R=0.060
+[clock, s3] spacelike share=0.35 births=37297 deaths=30801
+    e0: N=200 largest=0.009 top10=0.084 parts>1%=0 between-giants=1.000 local contrast(25/50/75)=[-0.14 -0.01  0.12] R=0.062
+    e10000: N=1492 largest=0.320 top10=0.875 parts>1%=14 between-giants=0.067 local contrast(25/50/75)=[-0.55 -0.15  0.13] R=0.013
+    e20000: N=2240 largest=0.327 top10=0.952 parts>1%=11 between-giants=0.031 local contrast(25/50/75)=[-0.52 -0.15  0.14] R=0.004
+    e30000: N=3457 largest=0.467 top10=0.965 parts>1%=10 between-giants=0.035 local contrast(25/50/75)=[-0.5  -0.13  0.15] R=0.026
+    e40000: N=4492 largest=0.466 top10=0.994 parts>1%=7 between-giants=0.020 local contrast(25/50/75)=[-0.5  -0.14  0.14] R=0.025
+    e50000: N=5545 largest=0.588 top10=0.996 parts>1%=5 between-giants=0.019 local contrast(25/50/75)=[-0.5  -0.14  0.15] R=0.002
+    e60000: N=6695 largest=0.727 top10=0.996 parts>1%=4 between-giants=0.019 local contrast(25/50/75)=[-0.49 -0.13  0.15] R=0.001
+[clock_dilated, s1] spacelike share=0.34 births=37061 deaths=31146
+    e0: N=200 largest=0.009 top10=0.086 parts>1%=0 between-giants=1.000 local contrast(25/50/75)=[-0.16  0.01  0.12] R=0.060
+    e10000: N=1012 largest=0.264 top10=0.853 parts>1%=9 between-giants=0.156 local contrast(25/50/75)=[-0.54 -0.15  0.13] R=0.069
+    e20000: N=2043 largest=0.463 top10=0.909 parts>1%=12 between-giants=0.064 local contrast(25/50/75)=[-0.57 -0.15  0.11] R=0.093
+    e30000: N=3146 largest=0.461 top10=0.961 parts>1%=7 between-giants=0.059 local contrast(25/50/75)=[-0.53 -0.15  0.14] R=0.074
+    e40000: N=4037 largest=0.449 top10=0.942 parts>1%=10 between-giants=0.058 local contrast(25/50/75)=[-0.49 -0.15  0.15] R=0.049
+    e50000: N=5063 largest=0.447 top10=0.964 parts>1%=6 between-giants=0.066 local contrast(25/50/75)=[-0.52 -0.15  0.14] R=0.045
+    e60000: N=6113 largest=0.447 top10=0.968 parts>1%=10 between-giants=0.032 local contrast(25/50/75)=[-0.54 -0.15  0.14] R=0.043
+[clock_dilated, s2] spacelike share=0.34 births=36682 deaths=31349
+    e0: N=200 largest=0.009 top10=0.088 parts>1%=0 between-giants=1.000 local contrast(25/50/75)=[-0.17  0.    0.13] R=0.049
+    e10000: N=1187 largest=0.568 top10=0.947 parts>1%=5 between-giants=0.081 local contrast(25/50/75)=[-0.53 -0.15  0.15] R=0.024
+    e20000: N=1740 largest=0.592 top10=0.999 parts>1%=3 between-giants=0.005 local contrast(25/50/75)=[-0.55 -0.17  0.12] R=0.002
+    e30000: N=2662 largest=0.670 top10=1.000 parts>1%=2 between-giants=0.004 local contrast(25/50/75)=[-0.56 -0.15  0.13] R=0.000
+    e40000: N=3692 largest=0.671 top10=1.000 parts>1%=2 between-giants=0.002 local contrast(25/50/75)=[-0.54 -0.17  0.13] R=0.000
+    e50000: N=4593 largest=0.671 top10=1.000 parts>1%=2 between-giants=0.002 local contrast(25/50/75)=[-0.51 -0.15  0.15] R=0.000
+    e60000: N=5534 largest=0.671 top10=1.000 parts>1%=2 between-giants=0.002 local contrast(25/50/75)=[-0.51 -0.15  0.15] R=0.000

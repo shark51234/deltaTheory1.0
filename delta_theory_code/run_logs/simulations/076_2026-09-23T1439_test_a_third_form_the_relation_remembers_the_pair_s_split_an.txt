@@ -1,0 +1,63 @@
+Run 076
+Time (UTC): 2026-09-23T14:39:51.206856Z
+Purpose: Test a third form: the relation remembers the pair's split and executes the registered swap on current totals
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && cat > shareswap.py << 'EOF'
+import numpy as np
+from perspectival import colour, network
+def rounds(state,edges,col,C,k):
+    tau,dl,rel=state
+    for _ in range(k):
+        for t in range(C):
+            for (u,v) in edges:
+                if col[(u,v)]!=t: continue
+                T=tau[u]+tau[v]; D=dl[u]+dl[v]
+                xu,yu=rel[(u,v)]                   # the split the relation registered at the pair's last contact
+                rel[(u,v)]=(tau[u]/T,dl[u]/D)      # register the current split
+                tau[u],tau[v]=T*yu,T*(1-yu)        # execute the swap of the registered split on the current totals
+                dl[u],dl[v]=D*xu,D*(1-xu)
+    return tau,dl,rel
+def start(spread,seed):
+    edges,n=network(seed); col,C=colour(edges); rng=np.random.default_rng(seed+1)
+    tau=np.exp(rng.normal(0,spread,n)); dl=np.exp(rng.normal(0,spread,n))
+    rel={(u,v):(tau[u]/(tau[u]+tau[v]),dl[u]/(dl[u]+dl[v])) for (u,v) in edges}
+    return edges,n,col,C,(tau,dl,rel)
+print("delayed share-swap (the relation remembers the pair's split; the swap of that split is executed on current totals)")
+for spread in (0.05,0.2,0.4,1.0,2.0):
+    edges,n,col,C,s=start(spread,3); T0,D0=s[0].sum(),s[1].sum()
+    tau,dl,rel=rounds((s[0].copy(),s[1].copy(),dict(s[2])),edges,col,C,5000)
+    th=0.5*np.log(tau/dl); eta=np.sqrt(tau*dl)
+    # disturbance growth around this uneven state
+    base=(tau.copy(),dl.copy(),dict(rel)); rng=np.random.default_rng(7); g=[]
+    for k in (10,100,1000):
+        rs=[]
+        for _ in range(4):
+            d=1e-7*rng.normal(size=2*n)
+            a=(base[0].copy(),base[1].copy(),dict(base[2])); b=(base[0]*(1+d[:n]),base[1]*(1+d[n:]),dict(base[2]))
+            a=rounds(a,edges,col,C,k); b=rounds(b,edges,col,C,k)
+            rs.append(np.linalg.norm(np.concatenate([np.log(b[0]/a[0]),np.log(b[1]/a[1])]))/np.linalg.norm(d))
+        g.append(f"k={k}: x{np.mean(rs):.2f}")
+    print(f"  spread {spread:4.2f}: 5000 rounds valid={bool((tau>0).all() and (dl>0).all())}; totals drift {abs(tau.sum()-T0):.1e},{abs(dl.sum()-D0):.1e}; "
+          f"rapidity spread {th.std():.3f}; size spread {np.log(eta).std():.3f} | disturbance growth {', '.join(g)}")
+EOF
+timeout 1500 python3 shareswap.py 2>/dev/null
+
+=== OUTPUT ===
+finite unevenness: does the background stay valid?
+  spread 0.05 flux         : positivity broke after 862 rounds
+  spread 0.05 perspectival : valid for 3000 rounds; rapidity spread 7.774, size spread 0.034, largest relation state 168545.81 x typical part, conservation error 2.2e-10
+  spread 0.20 flux         : positivity broke after 40 rounds
+  spread 0.20 perspectival : valid for 3000 rounds; rapidity spread 36.075, size spread 0.136, largest relation state 1801379649473090682880.00 x typical part, conservation error 7.9e+05
+  spread 0.40 flux         : positivity broke after 1 rounds
+  spread 0.40 perspectival : valid for 3000 rounds; rapidity spread 26.229, size spread 0.272, largest relation state 5278559185611521024.00 x typical part, conservation error 4.1e+03
+  spread 1.00 flux         : positivity broke after 0 rounds
+  spread 1.00 perspectival : valid for 3000 rounds; rapidity spread 9.205, size spread 0.679, largest relation state 203459751.17 x typical part, conservation error 5.7e-07
+delayed share-swap (the relation remembers the pair's split; the swap of that split is executed on current totals)
+  spread 0.05: 5000 rounds valid=True; totals drift 6.4e-14,1.4e-14; rapidity spread 0.027; size spread 0.036 | disturbance growth k=10: x0.68, k=100: x0.66, k=1000: x1.14
+  spread 0.20: 5000 rounds valid=True; totals drift 6.4e-14,4.6e-14; rapidity spread 0.105; size spread 0.164 | disturbance growth k=10: x0.67, k=100: x0.84, k=1000: x7.73
+  spread 0.40: 5000 rounds valid=True; totals drift 2.5e-14,1.1e-13; rapidity spread 0.148; size spread 0.320 | disturbance growth k=10: x0.77, k=100: x1.59, k=1000: x959.90
+  spread 1.00: 5000 rounds valid=True; totals drift 2.2e-13,3.6e-14; rapidity spread 0.659; size spread 0.836 | disturbance growth k=10: x1.00, k=100: x21.78, k=1000: x12977727.18
+  spread 2.00: 5000 rounds valid=True; totals drift 4.5e-13,9.9e-14; rapidity spread 1.807; size spread 1.820 | disturbance growth k=10: x1.47, k=100: x2446.78, k=1000: x28571029.50

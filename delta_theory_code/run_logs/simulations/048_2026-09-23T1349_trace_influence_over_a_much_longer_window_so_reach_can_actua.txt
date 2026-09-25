@@ -1,0 +1,23 @@
+Run 048
+Time (UTC): 2026-09-23T13:49:12.830923Z
+Purpose: Trace influence over a much longer window so reach can actually develop
+Working directory: scripts/forces
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/forces && sed -i 's/seed=int(sys.argv\[1\]); WARM=15000; RUN=20000; K=int(sys.argv\[2\]) if len(sys.argv)>2 else 1500; EVERY=20/seed=int(sys.argv[1]); WARM=15000; K=int(sys.argv[2]) if len(sys.argv)>2 else 1500; RUN=K+int(sys.argv[3]) if len(sys.argv)>3 else 20000; EVERY=int(sys.argv[4]) if len(sys.argv)>4 else 20/' channels.py && grep -n "WARM=" channels.py && timeout 3400 bash -c 'for s in 1 2 3; do python3 channels.py $s 12000 12000 60 2>/dev/null; done' && python3 analyze.py | tail -9
+
+=== OUTPUT ===
+63:    seed=int(sys.argv[1]); WARM=15000; K=int(sys.argv[2]) if len(sys.argv)>2 else 1500; RUN=K+int(sys.argv[3]) if len(sys.argv)>3 else 20000; EVERY=int(sys.argv[4]) if len(sys.argv)>4 else 20
+seed 1: 24000 encounters logged, 200 tracers finished
+seed 2: 24000 encounters logged, 200 tracers finished
+seed 3: 24000 encounters logged, 200 tracers finished
+
+tracers started at                                       n  reach (mean dist)  farthest  parts reached
+relations dominate (spacelike) / two-view birth        214               1.33      2.71           38.4
+selves dominate (timelike) / absorption                309               1.38      2.83           30.3
+selves dominate (timelike) / crossover birth            77               1.33      2.81           44.6
+
+  reach two-view birth  : mean 1.33 +/- 0.05 (s.e.)
+  reach absorption      : mean 1.38 +/- 0.03 (s.e.)
+  reach crossover birth : mean 1.33 +/- 0.08 (s.e.)

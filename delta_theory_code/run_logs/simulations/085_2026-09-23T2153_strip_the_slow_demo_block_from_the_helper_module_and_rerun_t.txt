@@ -1,0 +1,22 @@
+Run 085
+Time (UTC): 2026-09-23T21:53:18.914486Z
+Purpose: Strip the slow demo block from the helper module and rerun the Stage A test
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && python3 - << 'EOF'
+src=open('perspectival.py').read()
+head=src.split('if __name__=="__main__":')[0]
+open('perspectival.py','w').write(head)
+EOF
+python3 -c "import sys; sys.path.insert(0,'/home/claude/quantum'); from perspectival import colour, network; print('ok')" && timeout 2400 python3 stageA.py 2>&1 | tail -12
+
+=== OUTPUT ===
+ok
+Traceback (most recent call last):
+  File "/home/claude/quantum/stageA.py", line 31, in <module>
+    outcomes=rng.choice(M,size=N,p=pe)             # Postulate 8: the whole quantum is registered at one place, with the
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "numpy/random/_generator.pyx", line 889, in numpy.random._generator.Generator.choice
+ValueError: Probabilities are not non-negative

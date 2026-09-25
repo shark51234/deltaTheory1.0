@@ -1,0 +1,49 @@
+Run 023
+Time (UTC): 2026-09-23T12:49:54.110303Z
+Purpose: Check whether the tails are straight power laws or curved
+Working directory: scripts/edge
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/edge && cat > shape.py << 'EOF'
+import numpy as np, json
+from spectrum import loghist
+D=json.load(open("spectra.json"))
+def local_slopes(eta, nb=24):
+    c,dens,h=loghist(np.array(eta),nb)
+    med=np.median(eta); x=np.log10(c/med); y=np.log10(np.where(dens>0,dens,np.nan))
+    ok=(h>=5)
+    rows=[]
+    for k in range(len(c)):
+        if ok[k]: rows.append((x[k],y[k],h[k]))
+    return rows
+for key in ("0.83_7","0.83_8","0.7_7","0.5_7","0.0_7"):
+    eta=np.array(D[key]["eta"]); rows=local_slopes(eta)
+    xs=np.array([r[0] for r in rows]); ys=np.array([r[1] for r in rows])
+    # slopes over successive half-decade windows above the median
+    out=[]
+    for lo in np.arange(0.25,3.25,0.5):
+        m=(xs>=lo)&(xs<lo+0.75)
+        if m.sum()>=3: out.append(f"[{lo:.2f},{lo+0.75:.2f}]:{np.polyfit(xs[m],ys[m],1)[0]:.2f}")
+    print(f"{key}: local slopes by log10(eta/median) window: "+"  ".join(out))
+EOF
+python3 shape.py
+
+=== OUTPUT ===
+q=0.83 seed=7: N=15000 after 59890 events; eta: max/median=10^3.16, tail slope=-2.39 (10 bins); deaths=31052, lifetime tail slope=-2.55 (5 bins)
+q=0.83 seed=8: N=15001 after 98367 events; eta: max/median=10^2.79, tail slope=-2.35 (11 bins); deaths=53613, lifetime tail slope=-2.89 (6 bins)
+q=0.83 seed=9: collapsed
+q=0.7 seed=7: N=15000 after 37397 events; eta: max/median=10^2.26, tail slope=-2.56 (10 bins); deaths=15758, lifetime tail slope=-2.70 (4 bins)
+q=0.7 seed=8: N=15000 after 32765 events; eta: max/median=10^2.43, tail slope=-2.63 (10 bins); deaths=13360, lifetime tail slope=-2.67 (4 bins)
+q=0.7 seed=9: N=15000 after 34649 events; eta: max/median=10^3.08, tail slope=-2.73 (8 bins); deaths=14390, lifetime tail slope=-2.69 (4 bins)
+q=0.5 seed=7: N=15000 after 24090 events; eta: max/median=10^2.39, tail slope=-3.02 (9 bins); deaths=6826, lifetime tail slope=nan (3 bins)
+q=0.5 seed=8: N=15001 after 24014 events; eta: max/median=10^2.03, tail slope=-2.94 (9 bins); deaths=6895, lifetime tail slope=nan (3 bins)
+q=0.5 seed=9: N=15001 after 23825 events; eta: max/median=10^1.90, tail slope=-2.96 (11 bins); deaths=6737, lifetime tail slope=nan (3 bins)
+q=0.0 seed=7: N=15000 after 14859 events; eta: max/median=10^1.44, tail slope=-4.43 (8 bins); deaths=0, lifetime tail slope=nan (0 bins)
+q=0.0 seed=8: N=15000 after 14813 events; eta: max/median=10^1.08, tail slope=-4.45 (9 bins); deaths=0, lifetime tail slope=nan (0 bins)
+q=0.0 seed=9: N=15000 after 14984 events; eta: max/median=10^1.13, tail slope=-4.45 (8 bins); deaths=0, lifetime tail slope=nan (0 bins)
+0.83_7: local slopes by log10(eta/median) window: [0.25,1.00]:-2.00  [0.75,1.50]:-2.20  [1.25,2.00]:-2.34  [1.75,2.50]:-2.53
+0.83_8: local slopes by log10(eta/median) window: [0.25,1.00]:-1.90  [0.75,1.50]:-2.39  [1.25,2.00]:-2.42
+0.7_7: local slopes by log10(eta/median) window: [0.25,1.00]:-2.34  [0.75,1.50]:-2.79  [1.25,2.00]:-2.88
+0.5_7: local slopes by log10(eta/median) window: [0.25,1.00]:-2.84  [0.75,1.50]:-3.06
+0.0_7: local slopes by log10(eta/median) window: [0.25,1.00]:-4.32  [0.75,1.50]:-5.21

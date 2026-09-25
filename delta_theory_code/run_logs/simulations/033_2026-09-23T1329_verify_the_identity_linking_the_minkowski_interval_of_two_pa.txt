@@ -1,0 +1,20 @@
+Run 033
+Time (UTC): 2026-09-23T13:29:00.173369Z
+Purpose: Verify the identity linking the Minkowski interval of two parts to their pair matrix
+Working directory: scripts/causal
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+mkdir -p /home/claude/causal && cd /home/claude/causal && python3 - << 'EOF'
+# Check the identity: (tau_i - tau_j)(delta_i - delta_j) = (M_ii + M_jj) - (M_ij + M_ji)
+import numpy as np
+r=np.random.default_rng(0); worst=0
+for _ in range(100000):
+    ti,di,tj,dj=r.uniform(0.01,2,4)
+    lhs=(ti-tj)*(di-dj); rhs=(ti*di+tj*dj)-(ti*dj+tj*di)
+    worst=max(worst,abs(lhs-rhs))
+print("max |interval - (selves - relation)| over 100,000 random pairs:",worst)
+EOF
+
+=== OUTPUT ===
+max |interval - (selves - relation)| over 100,000 random pairs: 1.609823385706477e-15

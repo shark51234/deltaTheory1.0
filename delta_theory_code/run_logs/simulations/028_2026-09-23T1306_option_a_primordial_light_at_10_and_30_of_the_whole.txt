@@ -1,0 +1,20 @@
+Run 028
+Time (UTC): 2026-09-23T13:06:52.507488Z
+Purpose: Option (a): primordial light at 10% and 30% of the whole
+Working directory: scripts/rec
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/rec && timeout 3400 bash -c 'for q in 0.8 0.9 1.0; do python3 ab.py a $q 0.1 1,2 20000; done; for q in 0.9 1.0; do python3 ab.py a $q 0.3 1,2 20000; done'
+
+=== OUTPUT ===
+[a q=0.8 f=0.1 s1] e0:M=200,L=400,giant=0.01,rem=0.154,light=0.100 | e5000:M=1223,L=137,giant=0.52,rem=0.119,light=0.025 | collapsed@8000 || {'births': 4060, 'deaths': 4259, 'stale': 134, 'void': 44, 'blocked': 0, 'emitted': np.float64(0.0752211256427315)} tot=(1.000000,1.000000)
+[a q=0.8 f=0.1 s2] e0:M=200,L=400,giant=0.01,rem=0.144,light=0.100 | e5000:M=1608,L=145,giant=0.40,rem=0.139,light=0.035 | e10000:M=2208,L=77,giant=0.11,rem=0.193,light=0.010 | collapsed@13750 || {'births': 7318, 'deaths': 7517, 'stale': 200, 'void': 77, 'blocked': 0, 'emitted': np.float64(0.0782814553735863)} tot=(1.000000,1.000000)
+[a q=0.9 f=0.1 s1] e0:M=200,L=400,giant=0.01,rem=0.154,light=0.100 | collapsed@3750 || {'births': 1937, 'deaths': 2136, 'stale': 16, 'void': 2, 'blocked': 0, 'emitted': np.float64(0.012816900521468432)} tot=(1.000000,1.000000)
+[a q=0.9 f=0.1 s2] e0:M=200,L=400,giant=0.01,rem=0.144,light=0.100 | collapsed@3000 || {'births': 1445, 'deaths': 1644, 'stale': 10, 'void': 1, 'blocked': 0, 'emitted': np.float64(0.010687426554030963)} tot=(1.000000,1.000000)
+[a q=1.0 f=0.1 s1] e0:M=200,L=400,giant=0.01,rem=0.154,light=0.100 | collapsed@4250 || {'births': 2408, 'deaths': 2607, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[a q=1.0 f=0.1 s2] e0:M=200,L=400,giant=0.01,rem=0.144,light=0.100 | collapsed@2000 || {'births': 878, 'deaths': 1077, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[a q=0.9 f=0.3 s1] e0:M=200,L=400,giant=0.01,rem=0.342,light=0.300 | e5000:M=945,L=101,giant=0.50,rem=0.130,light=0.024 | collapsed@7000 || {'births': 3597, 'deaths': 3796, 'stale': 39, 'void': 15, 'blocked': 0, 'emitted': np.float64(0.01766799412212326)} tot=(1.000000,1.000000)
+[a q=0.9 f=0.3 s2] e0:M=200,L=400,giant=0.01,rem=0.334,light=0.300 | collapsed@4250 || {'births': 1950, 'deaths': 2149, 'stale': 24, 'void': 4, 'blocked': 0, 'emitted': np.float64(0.040066067890837845)} tot=(1.000000,1.000000)
+[a q=1.0 f=0.3 s1] e0:M=200,L=400,giant=0.01,rem=0.342,light=0.300 | e5000:M=64,L=54,giant=0.99,rem=0.012,light=0.008 | collapsed@5250 || {'births': 2798, 'deaths': 2997, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)
+[a q=1.0 f=0.3 s2] e0:M=200,L=400,giant=0.01,rem=0.334,light=0.300 | e5000:M=9,L=46,giant=1.00,rem=0.007,light=0.006 | collapsed@5250 || {'births': 2774, 'deaths': 2973, 'stale': 0, 'void': 0, 'blocked': 0, 'emitted': 0.0} tot=(1.000000,1.000000)

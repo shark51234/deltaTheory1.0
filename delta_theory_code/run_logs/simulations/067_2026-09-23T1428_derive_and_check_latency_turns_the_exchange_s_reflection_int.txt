@@ -1,0 +1,47 @@
+Run 067
+Time (UTC): 2026-09-23T14:28:49.535782Z
+Purpose: Derive and check: latency turns the exchange's reflection into a rotation with unit-modulus phases
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+mkdir -p /home/claude/quantum && cd /home/claude/quantum && cat > phases.py << 'EOF'
+import numpy as np
+# Two parts, totals normalized (tau = delta = 1). Part a has shares (x, y); b has (1-x, 1-y).
+# Exchange law in flux form, with registration of difference arriving after a latency of l ticks
+# (continuity is each part's own and current; only difference propagates, Ch. 8; Ch. 5 forbids l = 0):
+#   F = x(n)(1 - y(n-l)) - (1 - x(n)) y(n-l) = x(n) - y(n-l)
+#   x(n+1) = x(n) - F = y(n-l),   y(n+1) = y(n) + F = y(n) + x(n) - y(n-l)
+# Hence y(n+1) = y(n) - y(n-l) + y(n-l-1): characteristic (lam-1)(lam^(l+1)+1) = 0.
+for l in range(0,5):
+    c=np.zeros(l+3); c[0]=1; c[1]=-1; c[l+1]+=1; c[l+2]+=-1     # lam^(l+2) - lam^(l+1) + lam - 1
+    roots=np.roots(c)
+    mods=np.abs(roots); angs=np.sort(np.round(np.abs(np.angle(roots))/np.pi,4))
+    print(f"latency {l}: |roots| = {np.round(np.sort(mods),6).tolist()}  |angle|/pi = {angs.tolist()}  predicted odd multiples of 1/{l+1}")
+# simulate and measure: frequency content and whether the oscillation grows or decays
+print()
+for l in (1,2,3):
+    N=4096; y=[0.5]*(l+2); x=[0.5]*(l+2)
+    y[-1]=0.53; x[-1]=0.47            # a small initial imbalance
+    for n in range(N):
+        yn=y[-1]+x[-1]-y[-1-l]; xn=y[-1-l]
+        x.append(xn); y.append(yn)
+    y=np.array(y[l+2:]); x=np.array(x[l+2:])
+    s=y-y.mean(); spec=np.abs(np.fft.rfft(s)); f=np.fft.rfftfreq(len(s))
+    peaks=f[np.argsort(spec)[-3:]]
+    first=np.abs(s[:200]).max(); last=np.abs(s[-200:]).max()
+    print(f"latency {l}: strongest frequencies (cycles/tick) {np.round(np.sort(peaks),4).tolist()}, predicted {[round((2*m+1)/(2*(l+1)),4) for m in range((l+2)//2)]}; "
+          f"oscillation size first/last {first:.4f}/{last:.4f}; shares stay in (0,1): {bool((x>0).all() and (x<1).all() and (y>0).all() and (y<1).all())}")
+EOF
+python3 phases.py
+
+=== OUTPUT ===
+latency 0: |roots| = [1.0, 1.0]  |angle|/pi = [0.0, 1.0]  predicted odd multiples of 1/1
+latency 1: |roots| = [1.0, 1.0, 1.0]  |angle|/pi = [0.0, 0.5, 0.5]  predicted odd multiples of 1/2
+latency 2: |roots| = [1.0, 1.0, 1.0, 1.0]  |angle|/pi = [0.0, 0.3333, 0.3333, 1.0]  predicted odd multiples of 1/3
+latency 3: |roots| = [1.0, 1.0, 1.0, 1.0, 1.0]  |angle|/pi = [0.0, 0.25, 0.25, 0.75, 0.75]  predicted odd multiples of 1/4
+latency 4: |roots| = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]  |angle|/pi = [0.0, 0.2, 0.2, 0.6, 0.6, 1.0]  predicted odd multiples of 1/5
+
+latency 1: strongest frequencies (cycles/tick) [0.1643, 0.1646, 0.25], predicted [0.25]; oscillation size first/last 0.0300/0.0300; shares stay in (0,1): True
+latency 2: strongest frequencies (cycles/tick) [0.1665, 0.1667, 0.5], predicted [0.1667, 0.5]; oscillation size first/last 0.0300/0.0300; shares stay in (0,1): True
+latency 3: strongest frequencies (cycles/tick) [0.125, 0.1677, 0.375], predicted [0.125, 0.375]; oscillation size first/last 0.0300/0.0300; shares stay in (0,1): True

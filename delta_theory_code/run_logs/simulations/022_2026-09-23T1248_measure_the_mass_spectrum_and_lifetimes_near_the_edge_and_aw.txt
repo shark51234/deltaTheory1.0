@@ -1,0 +1,53 @@
+Run 022
+Time (UTC): 2026-09-23T12:48:21.549822Z
+Purpose: Measure the mass spectrum and lifetimes near the edge and away from it
+Working directory: scripts/edge
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/edge && cat > spectrum.py << 'EOF'
+import numpy as np, json, sys
+from edge import Universe
+def run(q, seed, Ntarget=15000, Emax=400000, N0=1000):
+    U=Universe(N0,seed=seed)
+    while U.n<Ntarget and U.e<Emax and U.n>=2:
+        U.step(q)
+    eta=np.sqrt(U.t[:U.n]*U.d[:U.n]); return U, eta
+def loghist(x, nb=30):
+    x=x[x>0]; b=np.logspace(np.log10(x.min()),np.log10(x.max())*1.0000001,nb+1)
+    h,_=np.histogram(x,bins=b); w=np.diff(b); c=np.sqrt(b[:-1]*b[1:]); dens=h/(w*len(x))
+    return c,dens,h
+def tailslope(x, lo_factor=2.0, mincount=5):
+    c,dens,h=loghist(x)
+    med=np.median(x); m=(c>lo_factor*med)&(h>=mincount)
+    if m.sum()<4: return float('nan'), int(m.sum())
+    p=np.polyfit(np.log10(c[m]),np.log10(dens[m]),1); return p[0], int(m.sum())
+out={}
+for q in (0.83,0.7,0.5,0.0):
+    for seed in (7,8,9):
+        U,eta=run(q,seed)
+        status="collapsed" if U.n<2 else f"N={U.n} after {U.e} events"
+        if U.n<100: print(f"q={q} seed={seed}: {status}"); continue
+        s,npts=tailslope(eta)
+        lt=np.array(U.lifetimes)
+        ls,lpts=tailslope(lt.astype(float)) if len(lt)>200 else (float('nan'),0)
+        span=np.log10(eta.max()/np.median(eta))
+        print(f"q={q} seed={seed}: {status}; eta: max/median=10^{span:.2f}, tail slope={s:.2f} ({npts} bins); deaths={U.deaths}, lifetime tail slope={ls:.2f} ({lpts} bins)",flush=True)
+        out[f"{q}_{seed}"]={"eta":eta.tolist(),"life":lt.tolist()}
+json.dump(out,open("spectra.json","w"))
+EOF
+timeout 3000 python3 spectrum.py
+
+=== OUTPUT ===
+q=0.83 seed=7: N=15000 after 59890 events; eta: max/median=10^3.16, tail slope=-2.39 (10 bins); deaths=31052, lifetime tail slope=-2.55 (5 bins)
+q=0.83 seed=8: N=15001 after 98367 events; eta: max/median=10^2.79, tail slope=-2.35 (11 bins); deaths=53613, lifetime tail slope=-2.89 (6 bins)
+q=0.83 seed=9: collapsed
+q=0.7 seed=7: N=15000 after 37397 events; eta: max/median=10^2.26, tail slope=-2.56 (10 bins); deaths=15758, lifetime tail slope=-2.70 (4 bins)
+q=0.7 seed=8: N=15000 after 32765 events; eta: max/median=10^2.43, tail slope=-2.63 (10 bins); deaths=13360, lifetime tail slope=-2.67 (4 bins)
+q=0.7 seed=9: N=15000 after 34649 events; eta: max/median=10^3.08, tail slope=-2.73 (8 bins); deaths=14390, lifetime tail slope=-2.69 (4 bins)
+q=0.5 seed=7: N=15000 after 24090 events; eta: max/median=10^2.39, tail slope=-3.02 (9 bins); deaths=6826, lifetime tail slope=nan (3 bins)
+q=0.5 seed=8: N=15001 after 24014 events; eta: max/median=10^2.03, tail slope=-2.94 (9 bins); deaths=6895, lifetime tail slope=nan (3 bins)
+q=0.5 seed=9: N=15001 after 23825 events; eta: max/median=10^1.90, tail slope=-2.96 (11 bins); deaths=6737, lifetime tail slope=nan (3 bins)
+q=0.0 seed=7: N=15000 after 14859 events; eta: max/median=10^1.44, tail slope=-4.43 (8 bins); deaths=0, lifetime tail slope=nan (0 bins)
+q=0.0 seed=8: N=15000 after 14813 events; eta: max/median=10^1.08, tail slope=-4.45 (9 bins); deaths=0, lifetime tail slope=nan (0 bins)
+q=0.0 seed=9: N=15000 after 14984 events; eta: max/median=10^1.13, tail slope=-4.45 (8 bins); deaths=0, lifetime tail slope=nan (0 bins)

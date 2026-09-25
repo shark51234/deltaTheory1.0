@@ -1,0 +1,12 @@
+Run 057
+Time (UTC): 2026-09-23T14:09:49.451093Z
+Purpose: Repeat at a larger size to see whether the horizon and its dimension drift as the universe grows
+Working directory: scripts/horizon
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/horizon && timeout 3400 bash -c 'for s in 1001 1012; do python3 horizon3.py $s 9000 32000 2>/dev/null; done'
+
+=== OUTPUT ===
+seed 1001 from 9000 -> 13650 parts: threshold 2.37 | error(coverage) r1:1.39(38%) r2:1.81(7%) r3:2.25(1%) r4:4.16(0%) | horizon 3.06 steps | dimension at horizon 3.90 | local dim r1..5 [2.01, 3.15, 4.48, 5.06, 4.81]
+seed 1012 from 9000 -> 13102 parts: threshold 2.40 | error(coverage) r1:1.39(38%) r2:1.39(8%) r3:0.93(1%) | horizon beyond steps | dimension at horizon n/a | local dim r1..5 [1.93, 2.77, 4.08, 4.78, 4.9]

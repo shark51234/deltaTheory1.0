@@ -1,0 +1,20 @@
+Run 059
+Time (UTC): 2026-09-23T14:13:13.072187Z
+Purpose: Find universes that survive their first asymmetry when parts act on records
+Working directory: scripts/binding
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/binding && python3 - << 'EOF' 2>/dev/null
+from bind import World
+surv=[]
+for seed in range(1000,1200):
+    w=World(seed,records=True)
+    while 2<=len(w.al)<500: w.step()
+    if len(w.al)>=500: surv.append(seed)
+    if len(surv)>=4: break
+print("universes with records that grew past 500 parts:",surv)
+EOF
+
+=== OUTPUT ===
+universes with records that grew past 500 parts: [1005, 1018, 1030, 1049]

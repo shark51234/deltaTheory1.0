@@ -1,0 +1,110 @@
+Run 056
+Time (UTC): 2026-09-23T14:08:52.414263Z
+Purpose: Robust horizon measurement: replace sources that die, sample repeatedly, four universes at the smaller size
+Working directory: scripts/horizon
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/horizon && cat > horizon3.py << 'EOF'
+import numpy as np, random, sys, json
+from collections import deque
+sys.path.insert(0,'/home/claude/space')
+from space import World
+def run(seed,Nw,K,S=80,burn=8000,every=4000):
+    w=World(seed,'pair',cap=80000)
+    while 2<=len(w.alive_list)<Nw: w.step()
+    if len(w.alive_list)<Nw: return None
+    cap=len(w.t); uid=np.full(cap,-1,dtype=np.int64); nuid=[0]
+    for k in w.alive_list: uid[k]=nuid[0]; nuid[0]+=1
+    kt=np.full((cap,S),-1.0); klt=np.zeros((cap,S)); kld=np.zeros((cap,S))
+    rng=np.random.default_rng(seed); src=[None]*S; suid=np.full(S,-2,dtype=np.int64)
+    def own(k,now):
+        for s in np.flatnonzero(suid==uid[k]): kt[k,s]=now; klt[k,s]=np.log(w.t[k]); kld[k,s]=np.log(w.d[k])
+    def pick_source(s,now):
+        nodes=w.alive_list; eta=np.sqrt(w.t[nodes]*w.d[nodes]); tot=eta.sum()
+        while True:
+            k=nodes[rng.integers(len(nodes))]
+            if np.sqrt(w.t[k]*w.d[k])<=0.01*tot: break
+        src[s]=k; suid[s]=uid[k]; kt[:,s]=-1.0; own(k,now)
+    for s in range(S): pick_source(s,0.0)
+    born=[]; orig=w.new
+    def hook(t,d):
+        k=orig(t,d); born.append(k); return k
+    w.new=hook; samples={}; know={}; thr_list=[]; Dl=[]
+    for n in range(1,K+1):
+        i=w.alive_list[w.r.integers(len(w.alive_list))]; nb=list(w.nb[i])
+        if nb:
+            thi=0.5*np.log(w.t[i]/w.d[i]); j=random.choices(nb,weights=[np.exp(thi-0.5*np.log(w.t[m]/w.d[m])) for m in nb])[0]
+            m=kt[j]>kt[i]; kt[i,m]=kt[j,m]; klt[i,m]=klt[j,m]; kld[i,m]=kld[j,m]
+            m=kt[i]>kt[j]; kt[j,m]=kt[i,m]; klt[j,m]=klt[i,m]; kld[j,m]=kld[i,m]
+            born.clear(); ti,di,tj,dj=w.t[i],w.d[i],w.t[j],w.d[j]
+            if (ti-tj)*(di-dj)<=0:
+                if random.random()<di/(di+dj): w.t[i],w.d[i]=ti,(di+dj)/2; w.t[j],w.d[j]=tj/2,dj/2; c=w.new(tj/2,di/2)
+                else: w.t[j],w.d[j]=tj,(di+dj)/2; w.t[i],w.d[i]=ti/2,di/2; c=w.new(ti/2,dj/2)
+                w.link(c,i); w.link(c,j)
+            else:
+                dom,sub=(i,j) if ti>tj else (j,i)
+                if random.random()<w.d[dom]/(w.d[dom]+w.d[sub]):
+                    w.t[dom]+=w.t[sub]; w.d[dom]+=w.d[sub]
+                    for q in list(w.nb[sub]):
+                        w.nb[q].discard(sub)
+                        if q!=dom: w.link(dom,q)
+                    w.nb[sub]=set(); w.kill(sub); uid[sub]=-1
+                else:
+                    tD,dD,tS,dS=w.t[dom],w.d[dom],w.t[sub],w.d[sub]
+                    w.t[dom],w.d[dom],w.t[sub],w.d[sub]=tD/2,dD/2,tS/2,dS/2
+                    for (a,b) in ((tD/2,dS/2),(tS/2,dD/2)):
+                        c=w.new(a,b); w.link(c,dom); w.link(c,sub)
+            w.e+=1
+            for c in born:
+                uid[c]=nuid[0]; nuid[0]+=1; pk=kt[i]>=kt[j]
+                kt[c]=np.maximum(kt[i],kt[j]); klt[c]=np.where(pk,klt[i],klt[j]); kld[c]=np.where(pk,kld[i],kld[j])
+            for k in (i,j):
+                if w.alive[k]: own(k,float(n))
+            for s in range(S):   # a source that has died is replaced by a fresh one
+                if uid[src[s]]!=suid[s] or not w.alive[src[s]]: pick_source(s,float(n))
+        if n>=burn and n%every==0:
+            lt=np.log(w.t); ld=np.log(w.d); nodes=list(w.alive_list)
+            thr_list.append(float(np.median([abs(lt[a]-lt[b])+abs(ld[a]-ld[b]) for a in nodes[:6000] for b in w.nb[a] if a<b])))
+            balls=np.zeros(10)
+            for s in range(S):
+                slot=src[s]; dist={slot:0}; dq=deque([slot])
+                while dq:
+                    u=dq.popleft()
+                    for v in w.nb[u]:
+                        if v not in dist: dist[v]=dist[u]+1; dq.append(v)
+                dd=np.array(list(dist.values()))
+                for r in range(10): balls[r]+=np.sum(dd<=r)
+                for a,r in dist.items():
+                    if 1<=r<=6:
+                        know.setdefault(r,[]).append(kt[a,s]>=0)
+                        if kt[a,s]>=0: samples.setdefault(r,[]).append(abs(klt[a,s]-lt[slot])+abs(kld[a,s]-ld[slot]))
+            Dl.append([np.log(balls[r+1]/balls[r])/np.log((r+1)/r) for r in range(1,6)])
+    thr=float(np.mean(thr_list)); med={r:float(np.median(v)) for r,v in samples.items() if len(v)>=40}
+    pts=[(0,0.0)]+sorted(med.items()); rstar=None
+    for (r0,e0),(r1,e1) in zip(pts,pts[1:]):
+        if e1>=thr: rstar=r0+(thr-e0)/(e1-e0)*(r1-r0); break
+    D=np.mean(np.array(Dl),axis=0)
+    Dstar=None
+    if rstar is not None:
+        # local dimension is defined between integer radii r->r+1 (r>=1); interpolate at r*
+        x=np.arange(1,6)+0.5
+        Dstar=float(np.interp(rstar,x,D))
+    return dict(N=len(w.alive_list),thr=thr,med=med,cover={r:float(np.mean(v)) for r,v in know.items()},rstar=rstar,D=D.tolist(),Dstar=Dstar)
+if __name__=="__main__":
+    seed=int(sys.argv[1]); Nw=int(sys.argv[2]); K=int(sys.argv[3])
+    res=run(seed,Nw,K)
+    if res is None: print(f"seed {seed}: collapsed"); sys.exit()
+    json.dump(res,open(f"h3_{seed}_{Nw}.json","w"))
+    e=" ".join(f"r{r}:{res['med'][r]:.2f}({res['cover'][r]:.0%})" for r in sorted(res['med']))
+    rs=f"{res['rstar']:.2f}" if res['rstar'] is not None else "beyond"
+    ds=f"{res['Dstar']:.2f}" if res['Dstar'] is not None else "n/a"
+    print(f"seed {seed} from {Nw} -> {res['N']} parts: threshold {res['thr']:.2f} | error(coverage) {e} | horizon {rs} steps | dimension at horizon {ds} | local dim r1..5 {np.round(res['D'],2).tolist()}",flush=True)
+EOF
+timeout 3400 bash -c 'for s in 1001 1005 1012 1023; do python3 horizon3.py $s 2500 32000 2>/dev/null; done'
+
+=== OUTPUT ===
+seed 1001 from 2500 -> 6684 parts: threshold 2.06 | error(coverage) r1:1.39(37%) r2:1.63(8%) r3:2.19(1%) r4:2.83(0%) | horizon 2.76 steps | dimension at horizon 3.46 | local dim r1..5 [2.21, 3.27, 3.98, 4.13, 3.81]
+seed 1005 from 2500 -> 6371 parts: threshold 2.06 | error(coverage) r1:1.39(40%) r2:1.39(7%) r3:1.67(1%) r4:2.26(0%) | horizon 3.67 steps | dimension at horizon 4.04 | local dim r1..5 [2.14, 3.27, 4.02, 4.14, 3.74]
+seed 1012 from 2500 -> 7545 parts: threshold 2.08 | error(coverage) r1:1.39(37%) r2:1.39(10%) r3:1.74(2%) r4:2.09(0%) r5:2.00(0%) | horizon 3.96 steps | dimension at horizon 3.89 | local dim r1..5 [2.2, 3.11, 3.72, 4.09, 4.02]
+seed 1023 from 2500 -> 6734 parts: threshold 2.08 | error(coverage) r1:1.39(37%) r2:1.39(6%) r3:1.58(1%) r4:2.88(0%) r5:4.72(0%) | horizon 3.39 steps | dimension at horizon 4.38 | local dim r1..5 [2.43, 3.89, 4.45, 4.1, 3.33]

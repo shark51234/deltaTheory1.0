@@ -1,0 +1,79 @@
+Run 035
+Time (UTC): 2026-09-23T13:30:23.787214Z
+Purpose: Test whether making activity independent of size (no speed-up for giants) changes the outcome
+Working directory: scripts/causal
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/causal && python3 - << 'EOF'
+src=open('causal.py').read()
+old="""        idx=np.flatnonzero(s.alive); pt=s.t[idx]
+        i=int(idx[np.searchsorted(np.cumsum(pt),s.r.random()*pt.sum())])
+        nb=list(s.nb[i])
+        if not nb: s.e+=1; return
+        j=random.choices(nb,weights=[s.d[k] for k in nb])[0]"""
+new="""        idx=np.flatnonzero(s.alive)
+        if getattr(s,'inertia',False):   # size-independent activity: initiate ~ tau/eta = e^theta, partner ~ delta/eta = e^-theta
+            pt=np.sqrt(s.t[idx]/s.d[idx])
+        else:
+            pt=s.t[idx]
+        i=int(idx[np.searchsorted(np.cumsum(pt),s.r.random()*pt.sum())])
+        nb=list(s.nb[i])
+        if not nb: s.e+=1; return
+        if getattr(s,'inertia',False):
+            j=random.choices(nb,weights=[np.sqrt(s.d[k]/s.t[k]) for k in nb])[0]
+        else:
+            j=random.choices(nb,weights=[s.d[k] for k in nb])[0]"""
+assert old in src; src=src.replace(old,new)
+src=src.replace("""    variant=sys.argv[1]; seeds=[int(x) for x in sys.argv[2].split(',')]; E=int(sys.argv[3])
+    for seed in seeds:
+        w=World(200,seed,variant); out=[]""","""    variant=sys.argv[1]; seeds=[int(x) for x in sys.argv[2].split(',')]; E=int(sys.argv[3])
+    inertia=len(sys.argv)>4 and sys.argv[4]=='inertia'
+    for seed in seeds:
+        w=World(200,seed,variant); w.inertia=inertia; out=[]""")
+src=src.replace("""print(f"[{variant} s{seed}] spacelike""","""print(f"[{variant}{'+inertia' if inertia else ''} s{seed}] spacelike""")
+open('causal.py','w').write(src)
+EOF
+timeout 3000 bash -c 'python3 causal.py oneway 1,2 60000 inertia; python3 causal.py selves 1,2 60000 inertia'
+
+=== OUTPUT ===
+[oneway+inertia s1] spacelike share=0.33 births=35207 deaths=32375 median life=556
+    e0: N=200, R=0.060, largest=0.009, top10=0.086, parts>1%=0, span=10^0.28, tail=nan
+    e10000: N=1377, R=0.059, largest=0.098, top10=0.554, parts>1%=19, span=10^4.17, tail=-1.46
+    e20000: N=2119, R=0.065, largest=0.107, top10=0.566, parts>1%=19, span=10^5.38, tail=-1.32
+    e30000: N=2612, R=0.064, largest=0.107, top10=0.567, parts>1%=19, span=10^7.83, tail=-1.05
+    e40000: N=1844, R=0.091, largest=0.104, top10=0.512, parts>1%=18, span=10^4.96, tail=-1.31
+    e50000: N=2353, R=0.054, largest=0.114, top10=0.568, parts>1%=16, span=10^5.66, tail=-1.33
+    e60000: N=3033, R=0.048, largest=0.114, top10=0.572, parts>1%=18, span=10^6.38, tail=-1.29
+[oneway+inertia s2] spacelike share=0.34 births=36206 deaths=31589 median life=490
+    e0: N=200, R=0.049, largest=0.009, top10=0.088, parts>1%=0, span=10^0.29, tail=nan
+    e10000: N=1244, R=0.022, largest=0.245, top10=0.828, parts>1%=14, span=10^4.99, tail=-1.43
+    e20000: N=1710, R=0.022, largest=0.245, top10=0.826, parts>1%=14, span=10^6.22, tail=-1.34
+    e30000: N=2405, R=0.028, largest=0.275, top10=0.838, parts>1%=12, span=10^11.01, tail=-1.03
+    e40000: N=3404, R=0.028, largest=0.275, top10=0.838, parts>1%=12, span=10^16.93, tail=-1.01
+    e50000: N=3603, R=0.028, largest=0.275, top10=0.838, parts>1%=12, span=10^20.04, tail=-0.99
+    e60000: N=4818, R=0.028, largest=0.275, top10=0.838, parts>1%=12, span=10^24.78, tail=-1.00
+[selves+inertia s1] spacelike share=0.47 births=48452 deaths=21694 median life=423
+    e0: N=200, R=0.060, largest=0.009, top10=0.086, parts>1%=0, span=10^0.28, tail=nan
+    e10000: N=4348, R=0.096, largest=0.038, top10=0.264, parts>1%=13, span=10^8.50, tail=-0.98
+    e20000: N=8548, R=0.096, largest=0.038, top10=0.264, parts>1%=13, span=10^27.23, tail=-0.99
+    e30000: N=12593, R=0.096, largest=0.038, top10=0.264, parts>1%=13, span=10^53.21, tail=-0.99
+    e40000: N=16798, R=0.096, largest=0.038, top10=0.264, parts>1%=13, span=10^64.96, tail=-1.00
+    e50000: N=19811, R=0.096, largest=0.038, top10=0.264, parts>1%=13, span=10^72.87, tail=-1.00
+    e60000: N=26957, R=0.096, largest=0.038, top10=0.264, parts>1%=13, span=10^98.96, tail=nan
+[selves+inertia s2] spacelike share=0.40 births=45945 deaths=25028 median life=495
+    e0: N=200, R=0.049, largest=0.009, top10=0.088, parts>1%=0, span=10^0.29, tail=nan
+    e10000: N=3890, R=0.091, largest=0.038, top10=0.214, parts>1%=17, span=10^4.10, tail=-1.43
+    e20000: N=7726, R=0.091, largest=0.038, top10=0.214, parts>1%=17, span=10^20.03, tail=-0.95
+    e30000: N=11622, R=0.091, largest=0.038, top10=0.214, parts>1%=17, span=10^37.32, tail=-0.99
+    e40000: N=15291, R=0.091, largest=0.038, top10=0.214, parts>1%=17, span=10^55.54, tail=-0.99
+    e50000: N=18582, R=0.091, largest=0.038, top10=0.214, parts>1%=17, span=10^64.91, tail=-1.00
+    e60000: N=21116, R=0.091, largest=0.038, top10=0.214, parts>1%=17, span=10^70.33, tail=-1.00
+
+[stderr]
+/home/claude/causal/causal.py:68: RuntimeWarning: divide by zero encountered in log10
+  b=np.logspace(np.log10(rel.min()),np.log10(rel.max())*1.000001,31); h,_=np.histogram(rel,bins=b)
+/usr/local/lib/python3.12/dist-packages/numpy/_core/function_base.py:163: RuntimeWarning: invalid value encountered in multiply
+  y *= step
+/usr/local/lib/python3.12/dist-packages/numpy/_core/function_base.py:173: RuntimeWarning: invalid value encountered in add
+  y += start

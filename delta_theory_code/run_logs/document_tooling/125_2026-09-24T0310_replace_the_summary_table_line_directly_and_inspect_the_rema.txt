@@ -1,0 +1,52 @@
+Run 125
+Time (UTC): 2026-09-24T03:10:20.159337Z
+Purpose: Replace the summary-table line directly and inspect the remaining targets
+Working directory: scripts/ed3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/ed3 && python3 - << 'PYEOF'
+p='merge.py'; lines=open(p).read().split('\n')
+def repl_line(fragment,newline):
+    idx=[i for i,l in enumerate(lines) if fragment in l]
+    assert len(idx)==1,(fragment,idx)
+    lines[idx[0]]=newline
+repl_line("Universes drift toward synchronised clocks",
+          '        "With vanishing as an act, desynchronisation holds at 0.07--0.12; reality never closes & \\\\Derived{} / \\\\Numerical{} \\\\\\\\\\n"')
+s='\n'.join(lines)
+old_full=[l for l in lines if "Full synchronisation" in l]
+print(old_full)
+open(p,'w').write(s)
+PYEOF
+sed -n 205,232p merge.py
+
+=== OUTPUT ===
+['\\\\item \\\\textbf{Full synchronisation} \\\\Open{}. Universes drift toward $R\\\\to0$ in their bulk, but small parts']
+\\end{remark}
+
+With Proposition~\\ref{post:whole},""")
+b=rep(b,"Outcome statistics follow squared motion amplitude & \\Postulated{} (P8) / \\Numerical{} \\\\",
+        "Outcome statistics follow squared motion amplitude & \\Derived{} (from \\ref{P:budget}) / \\Numerical{} \\\\")
+b=rep(b,"Whole units (P8); outcomes follow squared motion amplitude & \\Postulated{} / \\Numerical{} \\\\",
+        "Ticks from the whole; budget $I$; remainders reconstitute $I$ when clocks agree & \\Derived{} \\\\\n"
+        "With vanishing as an act, desynchronisation holds at 0.07--0.12; reality never closes & \\Derived{} / \\Numerical{} \\\\\n"
+        "Whole units (from the tick postulate); outcomes follow squared motion amplitude & \\Derived{} / \\Numerical{} \\\\")
+b=rep(b,"statistics (with P8), exact relativity","statistics, exact relativity")
+b=rep(b,"""relations' memories never changes; and, once a quantum is taken to exist only as a whole, single outcomes
+follow squared amplitudes of motion.""",
+"""relations' memories never changes; and, because a registration is one whole tick, single outcomes follow
+squared amplitudes of motion. A part's own clock ticks only when its $\\eta$ changes; counted from the whole, its
+ticks approach the whole's value and never reach it, and the parts' remainders give back the whole exactly when
+their clocks agree.""")
+b=rep(b,"""\\item \\textbf{Fringes and latency} \\Open{}. A clean driven two-path test; what sets $\\ell$.""",
+"""\\item \\textbf{Fringes and latency} \\Open{}. A clean driven two-path test; what sets $\\ell$.
+\\item \\textbf{Full synchronisation} \\Open{}. Universes drift toward $R\\to0$ in their bulk, but small parts
+stay out of step with their neighbours; whether clocks all agree when events cease is untested.
+\\item \\textbf{The note's closing questions} (free will, and what the author leaves unsaid) are outside the
+mathematics.""")
+b=rep(b,"""loops of composites act as flux. This would be Part~II's ``curvature is staleness'' with a circle in place
+of boosts.""","""loops of composites act as flux. This would be Part~II's ``curvature is staleness'' with a circle in place
+of boosts. The tick postulate makes tick times random and environment-dependent, so record ages do vary: the
+premise of this lead is now part of the postulates.""")
+b=rep(b,r"\texttt{quantum/}, \texttt{gauge/} and \texttt{composite/}.",
+        r"\texttt{quantum/}, \texttt{gauge/}, \texttt{composite/} and \texttt{ticks/}. The synchronisation test runs the causal event rule with the derived activity rule (Part II) and records $R$ every 50{,}000--100{,}000 events.")

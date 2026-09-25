@@ -1,0 +1,186 @@
+Run 065
+Time (UTC): 2026-09-23T14:25:05.094970Z
+Purpose: Write the new closing chapter, splice everything into the document, and compile
+Working directory: scripts/delta
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/delta && cat > new_summary.tex << 'EOF'
+% =====================================================================
+\chapter{Where the derivation stands}\label{ch:summary}
+
+\section{In plain words}
+
+Starting from nothing but $\tau$, $\delta$, $I$ and the statements of the philosophy, the mathematics has
+produced: the geometry of relativity in one space and one time dimension; collisions obeying
+$E^2=p^2+m^2$; thermal equilibrium; births by crossover with exact halving; a thermostat that keeps the
+universe partly in motion; horizon-like giants that take in what meets them and let nothing out; binding;
+structures that persist while their members turn over; and a dimension that depends on how far a structure
+can reach, coming out near 4 at the horizon. What it has not produced is anything quantum (no circular
+phases, so no interference with cancellation), any of the gauge groups of known forces, ordinary
+three-dimensional locality, or any of nature's numbers.
+
+\section{What has been obtained}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{p{0.60\textwidth} p{0.17\textwidth} l}
+\toprule
+Result & Label & Where \\
+\midrule
+Postulates; only ratios; $I$ a pure number & derived & Ch.~\ref{ch:method} \\
+Unequal exits; discrete own time; frozen fate; born--grow--decay & derived & Ch.~\ref{ch:single} \\
+Additive composition; invariant matrix; $\eta=\sqrt{\tau_a\delta_a/I}$ & derived$^\ast$ & Ch.~\ref{ch:composition} \\
+Minkowski geometry; reverse triangle inequality; time dilation; light at the null edge & derived & Ch.~\ref{ch:minkowski} \\
+Exchange is a relativistic elastic collision; $E^2=p^2+m^2$; remainder $=$ motion & derived & Ch.~\ref{ch:exchange} \\
+Equipartition & numerical & Ch.~\ref{ch:exchange}, \ref{ch:activity} \\
+Crossover birth, exact halving, inheritance & derived & Ch.~\ref{ch:births} \\
+Thermostat near 0.10 & numerical & Ch.~\ref{ch:thermostat} \\
+Balance condition $\langle O\rangle=\tfrac13$, $r=2\pm\sqrt3$ & derived & Ch.~\ref{ch:balance} \\
+Scale-free statistics at the edge; condensation-class resemblance & numerical & Ch.~\ref{ch:edge} \\
+Leakage from records; records are gauge links; curvature $=$ staleness & derived & Ch.~\ref{ch:records} \\
+Two-view event; no collapse; settling relative structure & derived / numerical & Ch.~\ref{ch:views} \\
+Interval identity; one-way registration; giants invisible & derived & Ch.~\ref{ch:causal} \\
+Activity rule from ``one clock'' and ``only difference moves'' & derived & Ch.~\ref{ch:activity} \\
+Identity as two angles; channels; parity echo & derived / numerical & Ch.~\ref{ch:forces} \\
+Small-world space held together by giants; dimension depends on reach & numerical & Ch.~\ref{ch:space} \\
+Horizon 2.8--4.0 steps; dimension there 3.5--4.4 & numerical & Ch.~\ref{ch:horizon} \\
+Binding condition; 12\% of relations bound; finite reach; fusion; organ-like structures & derived / numerical & Ch.~\ref{ch:binding} \\
+\bottomrule
+\end{tabular}
+\end{center}
+{\small $^\ast$Under the stated conditions (Theorem~\ref{thm:additivity}; Proposition~\ref{prop:eta}).}
+
+\section{Choices that remain}
+
+\begin{enumerate}
+  \item $f$ is the product; $\psi$ is built from the two views (Proposition~\ref{prop:eta}).
+  \item The combining rule is continuous, symmetric and associative (Theorem~\ref{thm:additivity}).
+  \item Timelike pairs are decided one way by the containing part (Chapter~\ref{ch:causal}).
+  \item The locality rules: children relate to both parents; an absorbed part's relations and records pass
+  to its absorber.
+  \item The horizon threshold: the median neighbour difference (Chapter~\ref{ch:horizon}).
+\end{enumerate}
+The values $s=1$ and $c=\half$, the two-view event, and the activity rule are derived, not chosen.
+
+\section{Open problems}
+
+\begin{enumerate}
+  \item \textbf{Circular phases.} Nothing quantum appears: the primitives give hyperbolic phases. The only
+  hint is the $\pm i$ produced by latency in the two-part universe (Proposition~\ref{prop:delay2}).
+  \item \textbf{Gauge groups.} Records give the boost group; known forces need U(1), SU(2), SU(3).
+  \item \textbf{Three-dimensional locality.} The network is small-world; its dimension depends on reach.
+  Whether the horizon dimension settles (and where) needs larger universes.
+  \item \textbf{The second kind of light.} Residues split into pure difference and pure continuity; the
+  philosophy names only the first.
+  \item \textbf{Light and Axiom~1.} Light sits at an exact null direction.
+  \item \textbf{The budget.} The derived life sum is $2\eta_0$; the working notes say $I$.
+  \item \textbf{Strict clocks.} One encounter per tick for both parties has not been tested.
+  \item \textbf{Identity of structures.} Structure persistence should be checked against a random baseline.
+  \item \textbf{Numbers.} No mass, coupling or ratio of nature has been produced.
+\end{enumerate}
+
+\section{Distance to known physics}
+
+A grand unified theory joins electromagnetism, the weak and the strong force in one quantum gauge
+symmetry; a theory of everything adds gravity. Measured against that, this work has the kinematic
+foundation (relativity-like geometry, energy and momentum, thermodynamics) and several structural echoes
+(horizon-like giants, binding with mass defect, a parity-breaking rule, gauge links, a dimension near 4),
+but none of the defining ingredients: quantum amplitudes, compact gauge groups, a particle spectrum with
+charges and spin, three-dimensional locality, or coupling strengths. Each is a foundational step, not a
+refinement, and the first of them, circular phases, is a prerequisite for the rest.
+
+EOF
+python3 - << 'EOF'
+p='/home/claude/delta/delta_theory_mathematics.tex'
+s=open(p).read()
+# 1) abstract
+a0=s.index('\\begin{abstract}'); a1=s.index('\\end{abstract}')+len('\\end{abstract}')
+abstract=r"""\begin{abstract}
+This document collects, in textbook form, the mathematics developed so far from the primitives of
+$\delta$-Theory: continuity $\tau$, difference $\delta$ and the invariant $\tau\delta=I$. The philosophy
+of $\delta$-Theory \cite{philosophy} is taken as fixed. From it we extract seven postulates and add
+nothing else: no new variables and no free constants, except where a choice is unavoidable, and then the
+choice is marked.
+
+Part I derives the kinematics. The invariant has the geometry of special relativity in one space and one
+time dimension; exchange between two parts is a relativistic elastic collision, with $E^2=p^2+m^2$ as
+algebra; a gas of parts reaches thermal equilibrium; births follow a crossover rule with exact halving; and
+the universe regulates its share of motion near one tenth. Every simple rule for births and deaths ends in
+collapse or fragmentation, and the balance between them is derived exactly.
+
+Part II resolves that knife-edge by letting perspective decide events. Records turn leakage and gauge links
+into consequences; the Minkowski interval between two parts decides whether they register each other
+mutually or one way; and the rate at which parts act is derived from ``one process, one clock'' and ``only
+difference propagates.'' The resulting universes keep persistent, horizon-like giants, balance births and
+deaths locally, and grow. Their relational network is a small-world held together by giants, whose
+dimension depends on reach and comes out at about 3.5--4.4 at the horizon. Acting on out-of-date records
+produces binding, with a derived binding condition, and structures that persist while their members turn
+over. Nothing quantum has appeared yet. Every result is labelled as derived, chosen, numerical or open.
+\end{abstract}"""
+s=s[:a0]+abstract+s[a1:]
+# 2) title
+s=s.replace(r"\date{Working draft \textperiodcentered{} 23 September 2026}",r"\date{Working draft, second edition \textperiodcentered{} 23 September 2026}")
+# 3) Part I header before chapter 1
+s=s.replace("% =====================================================================\n\\chapter{Method and postulates}",
+ "% =====================================================================\n\\part*{Part I: From the primitives to the knife-edge}\n\\addcontentsline{toc}{part}{Part I: From the primitives to the knife-edge}\n\n\\chapter{Method and postulates}",1)
+# 4) notation rows
+s=s.replace(r"O & the relation's share of a pair's invariant (Chapter~\ref{ch:births}) \\",
+ r"""O & the relation's share of a pair's invariant (Chapter~\ref{ch:births}) \\
+v_i=\delta_i/(\delta_i+\delta_j) & a part's share of the pair's difference (Chapter~\ref{ch:views}) \\
+\rho_{ab} & $a$'s relative record of $b$ (Chapter~\ref{ch:records}) \\
+\sigma_{ab} & a relation's own state; a debt when negative (Chapter~\ref{ch:binding}) \\""")
+# 5) equipartition correction in chapter 5
+marker="\\begin{plainwords}\nA crowd of parts that only exchange"
+assert marker in s
+s=s.replace(marker,r"""\begin{remark}[A correction]
+The 1.2\% spread above came from pairing parts in rounds. In a sequential-pairing test, both meeting rules
+give about 4--5\% (light parts about 7\% cooler), and so does the derived activity rule of
+Chapter~\ref{ch:activity}.
+\end{remark}
+
+"""+marker,1)
+# 6) forward reference at the end of chapter 9
+sumstart=s.index("% =====================================================================\n\\chapter{Summary and open problems}")
+fwd=r"""\paragraph{Looking ahead.} Part II takes up both. The edge is tested first (Chapter~\ref{ch:edge}); the
+restoring principle turns out to lie in perspective: whose view decides an encounter, and how often each
+part acts (Chapters~\ref{ch:views}--\ref{ch:activity}).
+
+"""
+s=s[:sumstart]+fwd+s[sumstart:]
+# 7) replace the old summary chapter with the new chapters
+sumstart=s.index("% =====================================================================\n\\chapter{Summary and open problems}")
+app=s.index("\\appendix")
+new="".join(open(f'/home/claude/delta/{f}').read() for f in ('new_a.tex','new_b.tex','new_c.tex','new_summary.tex'))
+s=s[:sumstart]+new+"\n"+s[app:]
+# 8) methods appendix additions
+mm="\\paragraph{Implementation.} Python with NumPy."
+assert mm in s
+s=s.replace(mm,r"""\paragraph{Part II universes.} Unless stated otherwise, universes start from the first asymmetry,
+$(0.6,0.4)$ and $(0.4,0.6)$, on a relational network where children relate to both parents and an absorbed
+part's relations pass to its absorber. Events follow the causal rule with the derived activity rule. Records
+store each partner's difference at the last contact; relation states are kept per relation and settled on
+merger. Influence and knowledge were traced by marking parts and merging records at every encounter;
+distances are shortest paths in steps, or in the change of $\ln\tau$ and $\ln\delta$.
+
+"""+mm,1)
+# 9) bibliography
+s=s.replace(r"\end{thebibliography}",r"""\bibitem{mkb1998} S.~N.~Majumdar, S.~Krishnamurthy and M.~Barma, Nonequilibrium phase transitions in models
+of aggregation, adsorption, and dissociation, \emph{Phys.\ Rev.\ Lett.} 81, 3691 (1998).
+\bibitem{rajesh2001} R.~Rajesh and S.~N.~Majumdar, Exact phase diagram of a model with aggregation and
+chipping, \emph{Phys.\ Rev.\ E} 63, 036114 (2001).
+\bibitem{rajesh2002} R.~Rajesh, D.~Das, B.~Chakraborty and M.~Barma, Aggregate formation in a system of
+coagulating and fragmenting particles with mass-dependent diffusion rates, arXiv:cond-mat/0207055 (2002).
+\end{thebibliography}""")
+s=s.replace(r"\begin{thebibliography}{9}",r"\begin{thebibliography}{99}")
+open(p,'w').write(s)
+print("spliced; length",len(s.splitlines()),"lines")
+EOF
+cd /home/claude/delta && for i in 1 2 3; do pdflatex -interaction=nonstopmode -halt-on-error delta_theory_mathematics.tex > b7.log 2>&1; done; echo "exit: $?"; grep -n "^!" -A5 b7.log | head -20; grep -E "Overfull|LaTeX Warning" b7.log | sort | uniq -c | head -20; pdfinfo delta_theory_mathematics.pdf | grep Pages
+
+=== OUTPUT ===
+spliced; length 2186 lines
+exit: 0
+      1 Overfull \hbox (27.81079pt too wide) in paragraph at lines 1665--1674
+Pages:           60

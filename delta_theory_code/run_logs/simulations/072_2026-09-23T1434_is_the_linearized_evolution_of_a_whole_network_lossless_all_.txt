@@ -1,0 +1,54 @@
+Run 072
+Time (UTC): 2026-09-23T14:34:16.075807Z
+Purpose: Is the linearized evolution of a whole network lossless (all modes on the unit circle), not just an isolated pair?
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && cat > linear.py << 'EOF'
+import numpy as np
+from interference2 import build
+def round_map(state,edges,col,C,n):
+    tau,dl,rec=state
+    tau=tau.copy(); dl=dl.copy(); rec=dict(rec)
+    for t in range(C):
+        for (u,v) in edges:
+            if col[(u,v)]!=t: continue
+            du,dv=dl[u],dl[v]; F=tau[u]*rec[(u,v)]-tau[v]*rec[(v,u)]
+            Tt=tau[u]+tau[v]; Dd=du+dv; dl[u]+=F/Tt; dl[v]-=F/Tt; tau[u]-=F/Dd; tau[v]+=F/Dd
+            rec[(u,v)]=dv; rec[(v,u)]=du
+    return tau,dl,rec
+def jacobian(edges,col,n,C,eps=1e-7):
+    keys=[(u,v) for (u,v) in edges]+[(v,u) for (u,v) in edges]
+    def vec(s): return np.concatenate([s[0],s[1],[s[2][k] for k in keys]])
+    def unvec(x): return (x[:n].copy(),x[n:2*n].copy(),{k:x[2*n+i] for i,k in enumerate(keys)})
+    x0=vec((np.ones(n),np.ones(n),{k:1.0 for k in keys}))
+    f0=vec(round_map(unvec(x0),edges,col,C,n)); J=np.zeros((len(x0),len(x0)))
+    for i in range(len(x0)):
+        x=x0.copy(); x[i]+=eps; J[:,i]=(vec(round_map(unvec(x),edges,col,C,n))-f0)/eps
+    return J
+def report(name,edges,n):
+    col={}
+    for e in edges:
+        used={col[f] for f in col if set(f)&set(e)}; c=0
+        while c in used: c+=1
+        col[e]=c
+    C=max(col.values())+1; J=jacobian(edges,col,n,C); lam=np.linalg.eigvals(J); m=np.abs(lam)
+    nz=m[m>1e-6]
+    print(f"{name:34s}: {len(lam)} modes; nonzero modes {len(nz)}; |lambda| of nonzero modes: min {nz.min():.6f}, max {nz.max():.6f}; "
+          f"modes on the unit circle (|1-|lambda||<1e-6): {int(np.sum(np.abs(nz-1)<1e-6))}")
+    return lam
+report("isolated pair",[(0,1)],2)
+report("chain of 5 parts",[(0,1),(1,2),(2,3),(3,4)],5)
+report("ring of 6 parts",[(0,1),(1,2),(2,3),(3,4),(4,5),(5,0)],6)
+n,R,edges,col=build(3,4); report("two-path interferometer (3 and 4)",edges,n)
+n,R,edges,col=build(3,6); report("two-path interferometer (3 and 6)",edges,n)
+EOF
+timeout 900 python3 linear.py 2>/dev/null | grep -v "paths 3 and\|one encounter"
+
+=== OUTPUT ===
+isolated pair                     : 6 modes; nonzero modes 5; |lambda| of nonzero modes: min 1.000000, max 1.000000; modes on the unit circle (|1-|lambda||<1e-6): 5
+chain of 5 parts                  : 18 modes; nonzero modes 14; |lambda| of nonzero modes: min 1.000000, max 1.000000; modes on the unit circle (|1-|lambda||<1e-6): 14
+ring of 6 parts                   : 24 modes; nonzero modes 18; |lambda| of nonzero modes: min 1.000000, max 1.000000; modes on the unit circle (|1-|lambda||<1e-6): 18
+two-path interferometer (3 and 4) : 40 modes; nonzero modes 30; |lambda| of nonzero modes: min 1.000000, max 1.000000; modes on the unit circle (|1-|lambda||<1e-6): 30
+two-path interferometer (3 and 6) : 48 modes; nonzero modes 36; |lambda| of nonzero modes: min 1.000000, max 1.000000; modes on the unit circle (|1-|lambda||<1e-6): 36

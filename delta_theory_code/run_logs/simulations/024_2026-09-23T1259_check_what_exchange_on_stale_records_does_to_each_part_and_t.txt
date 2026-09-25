@@ -1,0 +1,38 @@
+Run 024
+Time (UTC): 2026-09-23T12:59:00.979544Z
+Purpose: Check what exchange on stale records does to each part and to the pair's totals
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+mkdir -p /home/claude/rec && cat > /home/claude/rec/residue.py << 'EOF'
+# Derivation check: exchange computed from out-of-date records.
+import numpy as np
+rng=np.random.default_rng(1)
+def exch(ta,da,tb_rec,db_rec):
+    T=ta+tb_rec; D=da+db_rec
+    return T*da/D, D*ta/T
+signs={'++':0,'+-':0,'-+':0,'--':0,'00':0}; eta_err=0
+for k in range(20000):
+    ta,da,tb,db=rng.uniform(.1,1,4)
+    # each side's record of the other is the other's state perturbed (it changed since last contact)
+    f=lambda: np.exp(rng.normal(0,0.3))
+    tbr,dbr=tb*f(),db*f(); tar,dar=ta*f(),da*f()
+    ta2,da2=exch(ta,da,tbr,dbr); tb2,db2=exch(tb,db,tar,dar)
+    eta_err=max(eta_err,abs(ta2*da2-ta*da),abs(tb2*db2-tb*db))
+    rt=(ta+tb)-(ta2+tb2); rd=(da+db)-(da2+db2)
+    s=('+' if rt>1e-12 else '-' if rt<-1e-12 else '0')+('+' if rd>1e-12 else '-' if rd<-1e-12 else '0')
+    signs[s]=signs.get(s,0)+1
+print("max change in any part's tau*delta:",eta_err)
+print("residue sign pattern (tau,delta) over 20000 stale exchanges:",signs)
+# with current records the residue vanishes
+ta,da,tb,db=0.3,0.7,0.9,0.2
+ta2,da2=exch(ta,da,tb,db); tb2,db2=exch(tb,db,ta,da)
+print("current records: residue =",(ta+tb)-(ta2+tb2),(da+db)-(da2+db2))
+EOF
+python3 /home/claude/rec/residue.py
+
+=== OUTPUT ===
+max change in any part's tau*delta: 2.220446049250313e-16
+residue sign pattern (tau,delta) over 20000 stale exchanges: {'++': 888, '+-': 8695, '-+': 8562, '--': 1855, '00': 0}
+current records: residue = 0.0 0.0

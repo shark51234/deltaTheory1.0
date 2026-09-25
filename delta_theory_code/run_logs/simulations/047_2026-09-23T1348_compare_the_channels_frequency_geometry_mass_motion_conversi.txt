@@ -1,0 +1,54 @@
+Run 047
+Time (UTC): 2026-09-23T13:48:54.820893Z
+Purpose: Compare the channels: frequency, geometry, mass-motion conversion, and reach through the network
+Working directory: scripts/forces
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/forces && cat > analyze.py << 'EOF'
+import json, numpy as np
+from collections import defaultdict
+agg=defaultdict(list); tr=defaultdict(list); share=defaultdict(int); total=0
+for s in (1,2,3):
+    D=json.load(open(f"ch_{s}.json"))
+    for r in D['recs']:
+        key=(r['chan'],r['out']); agg[key].append(r); share[r['chan']]+=1; total+=1
+    for t in D['done']: tr[(t['chan'],t['out'])].append(t)
+print(f"{total} encounters over 3 seeds")
+for ch in sorted(share): print(f"  {ch}: {share[ch]/total:.1%} of encounters")
+print()
+print(f"{'channel / outcome':52s} {'share':>6s} {'mass ang':>9s} {'motion ang':>10s} {'d(mass)':>9s} {'rel.inherit':>11s} {'max deg':>8s}")
+for key in sorted(agg):
+    rs=agg[key]; n=len(rs)
+    print(f"{key[0]+' / '+key[1]:52s} {n/total:6.1%} {np.median([r['mass'] for r in rs]):9.2f} {np.median([r['motion'] for r in rs]):10.2f} "
+          f"{np.mean([r['dmass'] for r in rs]):+9.3f} {np.mean([r['inherited'] for r in rs]):11.2f} {np.median([r['degmax'] for r in rs]):8.0f}")
+print()
+print(f"{'tracers started at':52s} {'n':>5s} {'reach (mean dist)':>18s} {'farthest':>9s} {'parts reached':>14s}")
+for key in sorted(tr):
+    ts=tr[key]
+    print(f"{key[0]+' / '+key[1]:52s} {len(ts):5d} {np.mean([t['reach'] for t in ts]):18.2f} {np.mean([t['far'] for t in ts]):9.2f} {np.mean([t['count'] for t in ts]):14.1f}")
+# bootstrap-ish: standard error of reach per group
+print()
+for key in sorted(tr):
+    v=np.array([t['reach'] for t in tr[key]]); print(f"  reach {key[1]:16s}: mean {v.mean():.2f} +/- {v.std()/np.sqrt(len(v)):.2f} (s.e.)")
+EOF
+python3 analyze.py
+
+=== OUTPUT ===
+60000 encounters over 3 seeds
+  relations dominate (spacelike): 35.3% of encounters
+  selves dominate (timelike): 64.7% of encounters
+
+channel / outcome                                     share  mass ang motion ang   d(mass) rel.inherit  max deg
+relations dominate (spacelike) / two-view birth       35.3%      0.33       0.35    +0.021        0.00        5
+selves dominate (timelike) / absorption               50.2%      1.53       0.28    +0.013        1.64        7
+selves dominate (timelike) / crossover birth          14.5%      0.83       0.21    -0.058        0.00        6
+
+tracers started at                                       n  reach (mean dist)  farthest  parts reached
+relations dominate (spacelike) / two-view birth        983               0.33      0.76            6.0
+selves dominate (timelike) / absorption               1404               0.41      0.91            4.5
+selves dominate (timelike) / crossover birth           388               0.37      0.85            7.9
+
+  reach two-view birth  : mean 0.33 +/- 0.01 (s.e.)
+  reach absorption      : mean 0.41 +/- 0.01 (s.e.)
+  reach crossover birth : mean 0.37 +/- 0.02 (s.e.)

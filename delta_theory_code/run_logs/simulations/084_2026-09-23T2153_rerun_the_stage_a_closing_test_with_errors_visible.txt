@@ -1,0 +1,30 @@
+Run 084
+Time (UTC): 2026-09-23T21:53:14.448222Z
+Purpose: Rerun the Stage A closing test with errors visible
+Working directory: scripts/quantum
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/quantum && python3 - << 'EOF'
+src=open('perspectival.py').read()
+if 'if __name__=="__main__":' not in src:
+    src=src.replace('print("finite unevenness: does the background stay valid?")','if __name__=="__main__":\n  print("finite unevenness: does the background stay valid?")')
+    lines=src.split('\n'); out=[]; inmain=False
+    for ln in lines:
+        if ln.startswith('if __name__=="__main__":'): inmain=True; out.append(ln); continue
+        if inmain and ln and not ln.startswith(' ') and not ln.startswith('if __name__'):
+            out.append('  '+ln); continue
+        if inmain and ln.startswith(' '): out.append('  '+ln); continue
+        out.append(ln)
+    open('perspectival.py','w').write('\n'.join(out))
+EOF
+timeout 2400 python3 stageA.py 2>&1 | tail -12
+
+=== OUTPUT ===
+Traceback (most recent call last):
+  File "/home/claude/quantum/stageA.py", line 2, in <module>
+    from perspectival import colour
+  File "/home/claude/quantum/perspectival.py", line 49
+    for spread in (0.05,0.2,0.4,1.0):
+                                     ^
+IndentationError: unindent does not match any outer indentation level

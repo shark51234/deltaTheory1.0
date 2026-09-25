@@ -1,0 +1,108 @@
+Run 064
+Time (UTC): 2026-09-23T14:19:11.027852Z
+Purpose: Test whether bonds in relative motion build long-lived structures, and whether structures outlast their members
+Working directory: scripts/binding
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/binding && cat > structures.py << 'EOF'
+import numpy as np, sys, json
+from collections import defaultdict
+from bind import World
+seed=int(sys.argv[1]); N0=int(sys.argv[2]); K=int(sys.argv[3]); EVERY=int(sys.argv[4])
+w=World(seed,records=True)
+while 2<=len(w.al)<N0: w.step()
+if len(w.al)<N0: print("collapsed"); sys.exit()
+uid=np.full(len(w.t),-1,dtype=np.int64); nu=[0]
+for k in w.al: uid[k]=nu[0]; nu[0]+=1
+orig=w.new
+def hook(t,d):
+    k=orig(t,d); uid[k]=nu[0]; nu[0]+=1; return k
+w.new=hook
+def bonds():
+    out={}
+    for (a,b),sg in w.sig.items():
+        if sg>=0 or not (w.alive[a] and w.alive[b]) or b not in w.nb[a]: continue
+        ea,eb=np.sqrt(w.t[a]*w.d[a]),np.sqrt(w.t[b]*w.d[b]); dth=0.5*np.log(w.t[a]/w.d[a])-0.5*np.log(w.t[b]/w.d[b])
+        if (-sg)*(w.t[a]+w.t[b])>4*ea*eb*np.sinh(dth/2)**2:
+            moving=abs(dth)>abs(np.log(ea/eb))          # differ more in motion than in size (spacelike pair)
+            out[(min(uid[a],uid[b]),max(uid[a],uid[b]))]=moving
+    return out
+def components(edges):
+    adj=defaultdict(set)
+    for a,b in edges: adj[a].add(b); adj[b].add(a)
+    seen=set(); comps=[]
+    for v in adj:
+        if v in seen: continue
+        st=[v]; seen.add(v); c={v}
+        while st:
+            u=st.pop()
+            for x in adj[u]:
+                if x not in seen: seen.add(x); st.append(x); c.add(x)
+        comps.append(frozenset(c))
+    return comps
+snaps=[]
+for n in range(K+1):
+    if n%EVERY==0:
+        B=bonds(); alive={int(uid[k]) for k in w.al}
+        snaps.append(dict(B=B,alive=alive,all=components(B.keys()),mov=components([k for k,m in B.items() if m])))
+    if len(w.al)<2: break
+    w.step()
+# 1) bond lifetimes by type (runs of consecutive snapshots; type at first sighting; censored runs excluded)
+life=defaultdict(list); first={}; runs={}
+for s,S in enumerate(snaps):
+    for k in list(runs):
+        if k not in S['B']: life[first.pop(k)].append(s-runs.pop(k))
+    for k,m in S['B'].items():
+        if k not in runs: runs[k]=s; first[k]=m
+print(f"seed {seed}: {len(snaps)} snapshots every {EVERY} encounters; universe {len(w.al)} parts at the end")
+for m,label in ((True,'moving bonds (differ more in motion)'),(False,'size-dominated bonds')):
+    v=np.array(life[m])*EVERY
+    if len(v): print(f"  {label:38s}: {len(v)} ended; median life {np.median(v):.0f}, mean {v.mean():.0f}, lasting 5+ snapshots {np.mean(v>=5*EVERY):.1%}")
+share=np.mean([np.mean(list(S['B'].values())) for S in snaps if S['B']])
+print(f"  share of bonds that are moving: {share:.1%}")
+# 2) structures: size, and how long their members stay together (and how much the membership turns over)
+def follow(kind,lag):
+    ret=[]; turn=[]; memb=[]; n=0
+    for s in range(len(snaps)-lag):
+        later=snaps[s+lag][kind]
+        for C in snaps[s][kind]:
+            if len(C)<3: continue
+            n+=1; best=max(later,key=lambda D: len(C&D),default=frozenset())
+            ov=len(C&best); ret.append(ov/len(C)); turn.append(1-ov/len(best) if best else 1.0)
+            memb.append(len(C&snaps[s+lag]['alive'])/len(C))
+    return n,np.mean(ret),np.mean(turn),np.mean(memb)
+for kind,label in (('mov','structures held by moving bonds'),('all','structures held by any bonds')):
+    sizes=[len(C) for S in snaps for C in S[kind]]
+    print(f"  {label}: {np.mean([len(S[kind]) for S in snaps]):.0f} per snapshot, mean size {np.mean(sizes):.1f}, largest {max(sizes)}")
+    for lag in (1,3,6):
+        n,r,t,m=follow(kind,lag)
+        print(f"    after {lag*EVERY:6d} encounters: members still together {r:5.1%} | members still alive {m:5.1%} | new members in the matched structure {t:5.1%}  (n={n})")
+EOF
+timeout 3200 bash -c 'python3 structures.py 1005 4000 60000 2000 2>/dev/null; python3 structures.py 1018 4000 60000 2000 2>/dev/null'
+
+=== OUTPUT ===
+seed 1005: 31 snapshots every 2000 encounters; universe 9005 parts at the end
+  moving bonds (differ more in motion)  : 1620 ended; median life 4000, mean 5002, lasting 5+ snapshots 11.7%
+  size-dominated bonds                  : 11755 ended; median life 4000, mean 5168, lasting 5+ snapshots 13.8%
+  share of bonds that are moving: 11.0%
+  structures held by moving bonds: 129 per snapshot, mean size 2.2, largest 7
+    after   2000 encounters: members still together 50.4% | members still alive 84.3% | new members in the matched structure 38.4%  (n=494)
+    after   6000 encounters: members still together 20.1% | members still alive 57.9% | new members in the matched structure 73.9%  (n=454)
+    after  12000 encounters: members still together 10.2% | members still alive 37.0% | new members in the matched structure 86.0%  (n=396)
+  structures held by any bonds: 401 per snapshot, mean size 4.3, largest 59
+    after   2000 encounters: members still together 79.4% | members still alive 83.2% | new members in the matched structure 21.5%  (n=6497)
+    after   6000 encounters: members still together 52.2% | members still alive 58.8% | new members in the matched structure 48.5%  (n=5936)
+    after  12000 encounters: members still together 29.7% | members still alive 36.8% | new members in the matched structure 70.4%  (n=5136)
+seed 1018: 31 snapshots every 2000 encounters; universe 10169 parts at the end
+  moving bonds (differ more in motion)  : 1747 ended; median life 4000, mean 5381, lasting 5+ snapshots 14.4%
+  size-dominated bonds                  : 12072 ended; median life 4000, mean 5454, lasting 5+ snapshots 15.4%
+  share of bonds that are moving: 11.2%
+  structures held by moving bonds: 139 per snapshot, mean size 2.2, largest 8
+    after   2000 encounters: members still together 51.2% | members still alive 85.2% | new members in the matched structure 39.0%  (n=649)
+    after   6000 encounters: members still together 22.2% | members still alive 59.3% | new members in the matched structure 70.2%  (n=593)
+    after  12000 encounters: members still together 10.4% | members still alive 37.2% | new members in the matched structure 84.7%  (n=529)
+  structures held by any bonds: 433 per snapshot, mean size 4.4, largest 89
+    after   2000 encounters: members still together 81.5% | members still alive 84.8% | new members in the matched structure 20.0%  (n=7007)
+    after   6000 encounters: members still together 55.6% | members still alive 61.5% | new members in the matched structure 46.3%  (n=6350)
+    after  12000 encounters: members still together 33.7% | members still alive 39.9% | new members in the matched structure 67.7%  (n=5431)

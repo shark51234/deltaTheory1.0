@@ -1,0 +1,143 @@
+Run 092
+Time (UTC): 2026-09-23T22:09:38.109139Z
+Purpose: Inspect the rare one-part transformation that commutes: is it a rotation or something trivial?
+Working directory: scripts/gauge
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/gauge && cat > circle2.py << 'EOF'
+import numpy as np
+from covariant import colour, network
+from circle import roundmap, commutant
+np.set_printoptions(precision=3,suppress=True,linewidth=150)
+for seed,N in ((3,12),(5,20),(11,16)):
+    edges,n=network(seed,N); col,C=colour(edges); E=len(edges); J=roundmap(edges,n,col,C)
+    names=[f"lnτ{k}" for k in range(n)]+[f"lnδ{k}" for k in range(n)]+[f"x{edges[e]}" for e in range(E)]+[f"y{edges[e]}" for e in range(E)]
+    for k in range(n):
+        S=[k,n+k]+[2*n+e for e,(u,v) in enumerate(edges) if k in (u,v)]+[2*n+E+e for e,(u,v) in enumerate(edges) if k in (u,v)]
+        b,s=commutant(J,[S])
+        for M in b:
+            M=M/np.abs(M).max(); nz=np.argwhere(np.abs(M)>1e-6)
+            ev=np.linalg.eigvals(M); r=np.linalg.matrix_rank(M,1e-6)
+            print(f"seed {seed}: part {k} (degree {len([e for e in edges if k in e])}): rank {r}, eigenvalues nonzero {np.round(ev[np.abs(ev)>1e-6],3)}, "
+                  f"M^2 size {np.abs(M@M).max():.1e}")
+            rows=sorted(set(i for i,j in nz)); colsn=sorted(set(j for i,j in nz))
+            print("     acts on", [names[j] for j in colsn], "-> writes into", [names[i] for i in rows])
+EOF
+timeout 1500 python3 circle2.py
+
+=== OUTPUT ===
+network: 12 parts, 21 relations; eigenvalues of one round all on the unit circle: True
+   piecewise transformations that commute with a round: 2 independent ones
+      part block [[0.005, 1.0], [1.0, 0.005]]  relation block [[0.005, 1.0], [1.0, 0.005]]
+      part block [[1.0, -0.005], [-0.005, 1.0]]  relation block [[1.0, -0.005], [-0.005, 1.0]]
+   combinations with rotation-like (complex) eigenvalues: 0 of 2000
+   confined to one part: commuting transformations (any part): at most 1; still confined one round later: at most 4
+network: 20 parts, 37 relations; eigenvalues of one round all on the unit circle: True
+   piecewise transformations that commute with a round: 2 independent ones
+      part block [[-1.0, 0.026], [0.026, -1.0]]  relation block [[-1.0, 0.026], [0.026, -1.0]]
+      part block [[-0.026, -1.0], [-1.0, -0.026]]  relation block [[-0.026, -1.0], [-1.0, -0.026]]
+   combinations with rotation-like (complex) eigenvalues: 0 of 2000
+   confined to one part: commuting transformations (any part): at most 1; still confined one round later: at most 4
+network: 16 parts, 29 relations; eigenvalues of one round all on the unit circle: True
+   piecewise transformations that commute with a round: 2 independent ones
+      part block [[-0.023, 1.0], [1.0, -0.023]]  relation block [[-0.023, 1.0], [1.0, -0.023]]
+      part block [[-1.0, -0.023], [-0.023, -1.0]]  relation block [[-1.0, -0.023], [-0.023, -1.0]]
+   combinations with rotation-like (complex) eigenvalues: 0 of 2000
+   confined to one part: commuting transformations (any part): at most 1; still confined one round later: at most 4
+seed 3: part 0 (degree 6): rank 1, eigenvalues nonzero [4.+0.j], M^2 size 4.0e+00
+     acts on ['lnτ0', 'lnδ0', 'x(0, 1)', 'x(0, 2)', 'x(0, 4)', 'x(0, 5)', 'x(0, 7)', 'x(0, 11)', 'y(0, 1)', 'y(0, 2)', 'y(0, 4)', 'y(0, 5)', 'y(0, 7)', 'y(0, 11)'] -> writes into ['lnτ0', 'lnδ0', 'x(0, 1)', 'x(0, 2)', 'x(0, 4)', 'x(0, 5)', 'x(0, 7)', 'x(0, 11)', 'y(0, 1)', 'y(0, 2)', 'y(0, 4)', 'y(0, 5)', 'y(0, 7)', 'y(0, 11)']
+seed 3: part 1 (degree 7): rank 1, eigenvalues nonzero [4.5+0.j], M^2 size 4.5e+00
+     acts on ['lnτ1', 'lnδ1', 'x(0, 1)', 'x(1, 2)', 'x(1, 3)', 'x(1, 4)', 'x(1, 6)', 'x(1, 10)', 'x(1, 11)', 'y(0, 1)', 'y(1, 2)', 'y(1, 3)', 'y(1, 4)', 'y(1, 6)', 'y(1, 10)', 'y(1, 11)'] -> writes into ['lnτ1', 'lnδ1', 'x(0, 1)', 'x(1, 2)', 'x(1, 3)', 'x(1, 4)', 'x(1, 6)', 'x(1, 10)', 'x(1, 11)', 'y(0, 1)', 'y(1, 2)', 'y(1, 3)', 'y(1, 4)', 'y(1, 6)', 'y(1, 10)', 'y(1, 11)']
+seed 3: part 2 (degree 8): rank 1, eigenvalues nonzero [-5.+0.j], M^2 size 5.0e+00
+     acts on ['lnτ2', 'lnδ2', 'x(0, 2)', 'x(1, 2)', 'x(2, 3)', 'x(2, 5)', 'x(2, 6)', 'x(2, 7)', 'x(2, 8)', 'x(2, 9)', 'y(0, 2)', 'y(1, 2)', 'y(2, 3)', 'y(2, 5)', 'y(2, 6)', 'y(2, 7)', 'y(2, 8)', 'y(2, 9)'] -> writes into ['lnτ2', 'lnδ2', 'x(0, 2)', 'x(1, 2)', 'x(2, 3)', 'x(2, 5)', 'x(2, 6)', 'x(2, 7)', 'x(2, 8)', 'x(2, 9)', 'y(0, 2)', 'y(1, 2)', 'y(2, 3)', 'y(2, 5)', 'y(2, 6)', 'y(2, 7)', 'y(2, 8)', 'y(2, 9)']
+seed 3: part 3 (degree 2): rank 1, eigenvalues nonzero [-2.], M^2 size 2.0e+00
+     acts on ['lnτ3', 'lnδ3', 'x(1, 3)', 'x(2, 3)', 'y(1, 3)', 'y(2, 3)'] -> writes into ['lnτ3', 'lnδ3', 'x(1, 3)', 'x(2, 3)', 'y(1, 3)', 'y(2, 3)']
+seed 3: part 4 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ4', 'lnδ4', 'x(0, 4)', 'x(1, 4)', 'y(0, 4)', 'y(1, 4)'] -> writes into ['lnτ4', 'lnδ4', 'x(0, 4)', 'x(1, 4)', 'y(0, 4)', 'y(1, 4)']
+seed 3: part 5 (degree 2): rank 1, eigenvalues nonzero [2.], M^2 size 2.0e+00
+     acts on ['lnτ5', 'lnδ5', 'x(0, 5)', 'x(2, 5)', 'y(0, 5)', 'y(2, 5)'] -> writes into ['lnτ5', 'lnδ5', 'x(0, 5)', 'x(2, 5)', 'y(0, 5)', 'y(2, 5)']
+seed 3: part 6 (degree 4): rank 1, eigenvalues nonzero [3.+0.j], M^2 size 3.0e+00
+     acts on ['lnτ6', 'lnδ6', 'x(1, 6)', 'x(2, 6)', 'x(6, 8)', 'x(6, 10)', 'y(1, 6)', 'y(2, 6)', 'y(6, 8)', 'y(6, 10)'] -> writes into ['lnτ6', 'lnδ6', 'x(1, 6)', 'x(2, 6)', 'x(6, 8)', 'x(6, 10)', 'y(1, 6)', 'y(2, 6)', 'y(6, 8)', 'y(6, 10)']
+seed 3: part 7 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ7', 'lnδ7', 'x(0, 7)', 'x(2, 7)', 'y(0, 7)', 'y(2, 7)'] -> writes into ['lnτ7', 'lnδ7', 'x(0, 7)', 'x(2, 7)', 'y(0, 7)', 'y(2, 7)']
+seed 3: part 8 (degree 3): rank 1, eigenvalues nonzero [-2.5+0.j], M^2 size 2.5e+00
+     acts on ['lnτ8', 'lnδ8', 'x(2, 8)', 'x(6, 8)', 'x(8, 9)', 'y(2, 8)', 'y(6, 8)', 'y(8, 9)'] -> writes into ['lnτ8', 'lnδ8', 'x(2, 8)', 'x(6, 8)', 'x(8, 9)', 'y(2, 8)', 'y(6, 8)', 'y(8, 9)']
+seed 3: part 9 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ9', 'lnδ9', 'x(2, 9)', 'x(8, 9)', 'y(2, 9)', 'y(8, 9)'] -> writes into ['lnτ9', 'lnδ9', 'x(2, 9)', 'x(8, 9)', 'y(2, 9)', 'y(8, 9)']
+seed 3: part 10 (degree 2): rank 1, eigenvalues nonzero [2.], M^2 size 2.0e+00
+     acts on ['lnτ10', 'lnδ10', 'x(1, 10)', 'x(6, 10)', 'y(1, 10)', 'y(6, 10)'] -> writes into ['lnτ10', 'lnδ10', 'x(1, 10)', 'x(6, 10)', 'y(1, 10)', 'y(6, 10)']
+seed 3: part 11 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ11', 'lnδ11', 'x(0, 11)', 'x(1, 11)', 'y(0, 11)', 'y(1, 11)'] -> writes into ['lnτ11', 'lnδ11', 'x(0, 11)', 'x(1, 11)', 'y(0, 11)', 'y(1, 11)']
+seed 5: part 0 (degree 10): rank 1, eigenvalues nonzero [6.+0.j], M^2 size 6.0e+00
+     acts on ['lnτ0', 'lnδ0', 'x(0, 1)', 'x(0, 2)', 'x(0, 5)', 'x(0, 6)', 'x(0, 9)', 'x(0, 12)', 'x(0, 14)', 'x(0, 15)', 'x(0, 18)', 'x(0, 19)', 'y(0, 1)', 'y(0, 2)', 'y(0, 5)', 'y(0, 6)', 'y(0, 9)', 'y(0, 12)', 'y(0, 14)', 'y(0, 15)', 'y(0, 18)', 'y(0, 19)'] -> writes into ['lnτ0', 'lnδ0', 'x(0, 1)', 'x(0, 2)', 'x(0, 5)', 'x(0, 6)', 'x(0, 9)', 'x(0, 12)', 'x(0, 14)', 'x(0, 15)', 'x(0, 18)', 'x(0, 19)', 'y(0, 1)', 'y(0, 2)', 'y(0, 5)', 'y(0, 6)', 'y(0, 9)', 'y(0, 12)', 'y(0, 14)', 'y(0, 15)', 'y(0, 18)', 'y(0, 19)']
+seed 5: part 1 (degree 5): rank 1, eigenvalues nonzero [-3.5+0.j], M^2 size 3.5e+00
+     acts on ['lnτ1', 'lnδ1', 'x(0, 1)', 'x(1, 2)', 'x(1, 3)', 'x(1, 5)', 'x(1, 19)', 'y(0, 1)', 'y(1, 2)', 'y(1, 3)', 'y(1, 5)', 'y(1, 19)'] -> writes into ['lnτ1', 'lnδ1', 'x(0, 1)', 'x(1, 2)', 'x(1, 3)', 'x(1, 5)', 'x(1, 19)', 'y(0, 1)', 'y(1, 2)', 'y(1, 3)', 'y(1, 5)', 'y(1, 19)']
+seed 5: part 2 (degree 10): rank 1, eigenvalues nonzero [-6.+0.j], M^2 size 6.0e+00
+     acts on ['lnτ2', 'lnδ2', 'x(0, 2)', 'x(1, 2)', 'x(2, 3)', 'x(2, 4)', 'x(2, 7)', 'x(2, 10)', 'x(2, 12)', 'x(2, 16)', 'x(2, 17)', 'x(2, 18)', 'y(0, 2)', 'y(1, 2)', 'y(2, 3)', 'y(2, 4)', 'y(2, 7)', 'y(2, 10)', 'y(2, 12)', 'y(2, 16)', 'y(2, 17)', 'y(2, 18)'] -> writes into ['lnτ2', 'lnδ2', 'x(0, 2)', 'x(1, 2)', 'x(2, 3)', 'x(2, 4)', 'x(2, 7)', 'x(2, 10)', 'x(2, 12)', 'x(2, 16)', 'x(2, 17)', 'x(2, 18)', 'y(0, 2)', 'y(1, 2)', 'y(2, 3)', 'y(2, 4)', 'y(2, 7)', 'y(2, 10)', 'y(2, 12)', 'y(2, 16)', 'y(2, 17)', 'y(2, 18)']
+seed 5: part 3 (degree 8): rank 1, eigenvalues nonzero [5.+0.j], M^2 size 5.0e+00
+     acts on ['lnτ3', 'lnδ3', 'x(1, 3)', 'x(2, 3)', 'x(3, 4)', 'x(3, 8)', 'x(3, 10)', 'x(3, 11)', 'x(3, 13)', 'x(3, 17)', 'y(1, 3)', 'y(2, 3)', 'y(3, 4)', 'y(3, 8)', 'y(3, 10)', 'y(3, 11)', 'y(3, 13)', 'y(3, 17)'] -> writes into ['lnτ3', 'lnδ3', 'x(1, 3)', 'x(2, 3)', 'x(3, 4)', 'x(3, 8)', 'x(3, 10)', 'x(3, 11)', 'x(3, 13)', 'x(3, 17)', 'y(1, 3)', 'y(2, 3)', 'y(3, 4)', 'y(3, 8)', 'y(3, 10)', 'y(3, 11)', 'y(3, 13)', 'y(3, 17)']
+seed 5: part 4 (degree 5): rank 1, eigenvalues nonzero [3.5+0.j], M^2 size 3.5e+00
+     acts on ['lnτ4', 'lnδ4', 'x(2, 4)', 'x(3, 4)', 'x(4, 7)', 'x(4, 8)', 'x(4, 13)', 'y(2, 4)', 'y(3, 4)', 'y(4, 7)', 'y(4, 8)', 'y(4, 13)'] -> writes into ['lnτ4', 'lnδ4', 'x(2, 4)', 'x(3, 4)', 'x(4, 7)', 'x(4, 8)', 'x(4, 13)', 'y(2, 4)', 'y(3, 4)', 'y(4, 7)', 'y(4, 8)', 'y(4, 13)']
+seed 5: part 5 (degree 3): rank 1, eigenvalues nonzero [2.5+0.j], M^2 size 2.5e+00
+     acts on ['lnτ5', 'lnδ5', 'x(0, 5)', 'x(1, 5)', 'x(5, 6)', 'y(0, 5)', 'y(1, 5)', 'y(5, 6)'] -> writes into ['lnτ5', 'lnδ5', 'x(0, 5)', 'x(1, 5)', 'x(5, 6)', 'y(0, 5)', 'y(1, 5)', 'y(5, 6)']
+seed 5: part 6 (degree 4): rank 1, eigenvalues nonzero [3.+0.j], M^2 size 3.0e+00
+     acts on ['lnτ6', 'lnδ6', 'x(0, 6)', 'x(5, 6)', 'x(6, 9)', 'x(6, 14)', 'y(0, 6)', 'y(5, 6)', 'y(6, 9)', 'y(6, 14)'] -> writes into ['lnτ6', 'lnδ6', 'x(0, 6)', 'x(5, 6)', 'x(6, 9)', 'x(6, 14)', 'y(0, 6)', 'y(5, 6)', 'y(6, 9)', 'y(6, 14)']
+seed 5: part 7 (degree 3): rank 1, eigenvalues nonzero [-2.5+0.j], M^2 size 2.5e+00
+     acts on ['lnτ7', 'lnδ7', 'x(2, 7)', 'x(4, 7)', 'x(7, 16)', 'y(2, 7)', 'y(4, 7)', 'y(7, 16)'] -> writes into ['lnτ7', 'lnδ7', 'x(2, 7)', 'x(4, 7)', 'x(7, 16)', 'y(2, 7)', 'y(4, 7)', 'y(7, 16)']
+seed 5: part 8 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ8', 'lnδ8', 'x(3, 8)', 'x(4, 8)', 'y(3, 8)', 'y(4, 8)'] -> writes into ['lnτ8', 'lnδ8', 'x(3, 8)', 'x(4, 8)', 'y(3, 8)', 'y(4, 8)']
+seed 5: part 9 (degree 3): rank 1, eigenvalues nonzero [-2.5], M^2 size 2.5e+00
+     acts on ['lnτ9', 'lnδ9', 'x(0, 9)', 'x(6, 9)', 'x(9, 15)', 'y(0, 9)', 'y(6, 9)', 'y(9, 15)'] -> writes into ['lnτ9', 'lnδ9', 'x(0, 9)', 'x(6, 9)', 'x(9, 15)', 'y(0, 9)', 'y(6, 9)', 'y(9, 15)']
+seed 5: part 10 (degree 3): rank 1, eigenvalues nonzero [-2.5], M^2 size 2.5e+00
+     acts on ['lnτ10', 'lnδ10', 'x(2, 10)', 'x(3, 10)', 'x(10, 11)', 'y(2, 10)', 'y(3, 10)', 'y(10, 11)'] -> writes into ['lnτ10', 'lnδ10', 'x(2, 10)', 'x(3, 10)', 'x(10, 11)', 'y(2, 10)', 'y(3, 10)', 'y(10, 11)']
+seed 5: part 11 (degree 2): rank 1, eigenvalues nonzero [2.], M^2 size 2.0e+00
+     acts on ['lnτ11', 'lnδ11', 'x(3, 11)', 'x(10, 11)', 'y(3, 11)', 'y(10, 11)'] -> writes into ['lnτ11', 'lnδ11', 'x(3, 11)', 'x(10, 11)', 'y(3, 11)', 'y(10, 11)']
+seed 5: part 12 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ12', 'lnδ12', 'x(0, 12)', 'x(2, 12)', 'y(0, 12)', 'y(2, 12)'] -> writes into ['lnτ12', 'lnδ12', 'x(0, 12)', 'x(2, 12)', 'y(0, 12)', 'y(2, 12)']
+seed 5: part 13 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ13', 'lnδ13', 'x(3, 13)', 'x(4, 13)', 'y(3, 13)', 'y(4, 13)'] -> writes into ['lnτ13', 'lnδ13', 'x(3, 13)', 'x(4, 13)', 'y(3, 13)', 'y(4, 13)']
+seed 5: part 14 (degree 2): rank 1, eigenvalues nonzero [2.], M^2 size 2.0e+00
+     acts on ['lnτ14', 'lnδ14', 'x(0, 14)', 'x(6, 14)', 'y(0, 14)', 'y(6, 14)'] -> writes into ['lnτ14', 'lnδ14', 'x(0, 14)', 'x(6, 14)', 'y(0, 14)', 'y(6, 14)']
+seed 5: part 15 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ15', 'lnδ15', 'x(0, 15)', 'x(9, 15)', 'y(0, 15)', 'y(9, 15)'] -> writes into ['lnτ15', 'lnδ15', 'x(0, 15)', 'x(9, 15)', 'y(0, 15)', 'y(9, 15)']
+seed 5: part 16 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ16', 'lnδ16', 'x(2, 16)', 'x(7, 16)', 'y(2, 16)', 'y(7, 16)'] -> writes into ['lnτ16', 'lnδ16', 'x(2, 16)', 'x(7, 16)', 'y(2, 16)', 'y(7, 16)']
+seed 5: part 17 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ17', 'lnδ17', 'x(2, 17)', 'x(3, 17)', 'y(2, 17)', 'y(3, 17)'] -> writes into ['lnτ17', 'lnδ17', 'x(2, 17)', 'x(3, 17)', 'y(2, 17)', 'y(3, 17)']
+seed 5: part 18 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ18', 'lnδ18', 'x(0, 18)', 'x(2, 18)', 'y(0, 18)', 'y(2, 18)'] -> writes into ['lnτ18', 'lnδ18', 'x(0, 18)', 'x(2, 18)', 'y(0, 18)', 'y(2, 18)']
+seed 5: part 19 (degree 2): rank 1, eigenvalues nonzero [-2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ19', 'lnδ19', 'x(0, 19)', 'x(1, 19)', 'y(0, 19)', 'y(1, 19)'] -> writes into ['lnτ19', 'lnδ19', 'x(0, 19)', 'x(1, 19)', 'y(0, 19)', 'y(1, 19)']
+seed 11: part 0 (degree 8): rank 1, eigenvalues nonzero [5.+0.j], M^2 size 5.0e+00
+     acts on ['lnτ0', 'lnδ0', 'x(0, 1)', 'x(0, 2)', 'x(0, 3)', 'x(0, 4)', 'x(0, 5)', 'x(0, 8)', 'x(0, 10)', 'x(0, 12)', 'y(0, 1)', 'y(0, 2)', 'y(0, 3)', 'y(0, 4)', 'y(0, 5)', 'y(0, 8)', 'y(0, 10)', 'y(0, 12)'] -> writes into ['lnτ0', 'lnδ0', 'x(0, 1)', 'x(0, 2)', 'x(0, 3)', 'x(0, 4)', 'x(0, 5)', 'x(0, 8)', 'x(0, 10)', 'x(0, 12)', 'y(0, 1)', 'y(0, 2)', 'y(0, 3)', 'y(0, 4)', 'y(0, 5)', 'y(0, 8)', 'y(0, 10)', 'y(0, 12)']
+seed 11: part 1 (degree 10): rank 1, eigenvalues nonzero [6.+0.j], M^2 size 6.0e+00
+     acts on ['lnτ1', 'lnδ1', 'x(0, 1)', 'x(1, 2)', 'x(1, 3)', 'x(1, 4)', 'x(1, 6)', 'x(1, 7)', 'x(1, 10)', 'x(1, 11)', 'x(1, 13)', 'x(1, 14)', 'y(0, 1)', 'y(1, 2)', 'y(1, 3)', 'y(1, 4)', 'y(1, 6)', 'y(1, 7)', 'y(1, 10)', 'y(1, 11)', 'y(1, 13)', 'y(1, 14)'] -> writes into ['lnτ1', 'lnδ1', 'x(0, 1)', 'x(1, 2)', 'x(1, 3)', 'x(1, 4)', 'x(1, 6)', 'x(1, 7)', 'x(1, 10)', 'x(1, 11)', 'x(1, 13)', 'x(1, 14)', 'y(0, 1)', 'y(1, 2)', 'y(1, 3)', 'y(1, 4)', 'y(1, 6)', 'y(1, 7)', 'y(1, 10)', 'y(1, 11)', 'y(1, 13)', 'y(1, 14)']
+seed 11: part 2 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ2', 'lnδ2', 'x(0, 2)', 'x(1, 2)', 'y(0, 2)', 'y(1, 2)'] -> writes into ['lnτ2', 'lnδ2', 'x(0, 2)', 'x(1, 2)', 'y(0, 2)', 'y(1, 2)']
+seed 11: part 3 (degree 5): rank 1, eigenvalues nonzero [3.5+0.j], M^2 size 3.5e+00
+     acts on ['lnτ3', 'lnδ3', 'x(0, 3)', 'x(1, 3)', 'x(3, 6)', 'x(3, 9)', 'x(3, 12)', 'y(0, 3)', 'y(1, 3)', 'y(3, 6)', 'y(3, 9)', 'y(3, 12)'] -> writes into ['lnτ3', 'lnδ3', 'x(0, 3)', 'x(1, 3)', 'x(3, 6)', 'x(3, 9)', 'x(3, 12)', 'y(0, 3)', 'y(1, 3)', 'y(3, 6)', 'y(3, 9)', 'y(3, 12)']
+seed 11: part 4 (degree 4): rank 1, eigenvalues nonzero [-3.], M^2 size 3.0e+00
+     acts on ['lnτ4', 'lnδ4', 'x(0, 4)', 'x(1, 4)', 'x(4, 5)', 'x(4, 7)', 'y(0, 4)', 'y(1, 4)', 'y(4, 5)', 'y(4, 7)'] -> writes into ['lnτ4', 'lnδ4', 'x(0, 4)', 'x(1, 4)', 'x(4, 5)', 'x(4, 7)', 'y(0, 4)', 'y(1, 4)', 'y(4, 5)', 'y(4, 7)']
+seed 11: part 5 (degree 4): rank 1, eigenvalues nonzero [3.+0.j], M^2 size 3.0e+00
+     acts on ['lnτ5', 'lnδ5', 'x(0, 5)', 'x(4, 5)', 'x(5, 8)', 'x(5, 15)', 'y(0, 5)', 'y(4, 5)', 'y(5, 8)', 'y(5, 15)'] -> writes into ['lnτ5', 'lnδ5', 'x(0, 5)', 'x(4, 5)', 'x(5, 8)', 'x(5, 15)', 'y(0, 5)', 'y(4, 5)', 'y(5, 8)', 'y(5, 15)']
+seed 11: part 6 (degree 5): rank 1, eigenvalues nonzero [3.5+0.j], M^2 size 3.5e+00
+     acts on ['lnτ6', 'lnδ6', 'x(1, 6)', 'x(3, 6)', 'x(6, 9)', 'x(6, 11)', 'x(6, 13)', 'y(1, 6)', 'y(3, 6)', 'y(6, 9)', 'y(6, 11)', 'y(6, 13)'] -> writes into ['lnτ6', 'lnδ6', 'x(1, 6)', 'x(3, 6)', 'x(6, 9)', 'x(6, 11)', 'x(6, 13)', 'y(1, 6)', 'y(3, 6)', 'y(6, 9)', 'y(6, 11)', 'y(6, 13)']
+seed 11: part 7 (degree 2): rank 1, eigenvalues nonzero [2.], M^2 size 2.0e+00
+     acts on ['lnτ7', 'lnδ7', 'x(1, 7)', 'x(4, 7)', 'y(1, 7)', 'y(4, 7)'] -> writes into ['lnτ7', 'lnδ7', 'x(1, 7)', 'x(4, 7)', 'y(1, 7)', 'y(4, 7)']
+seed 11: part 8 (degree 3): rank 1, eigenvalues nonzero [-2.5], M^2 size 2.5e+00
+     acts on ['lnτ8', 'lnδ8', 'x(0, 8)', 'x(5, 8)', 'x(8, 15)', 'y(0, 8)', 'y(5, 8)', 'y(8, 15)'] -> writes into ['lnτ8', 'lnδ8', 'x(0, 8)', 'x(5, 8)', 'x(8, 15)', 'y(0, 8)', 'y(5, 8)', 'y(8, 15)']
+seed 11: part 9 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ9', 'lnδ9', 'x(3, 9)', 'x(6, 9)', 'y(3, 9)', 'y(6, 9)'] -> writes into ['lnτ9', 'lnδ9', 'x(3, 9)', 'x(6, 9)', 'y(3, 9)', 'y(6, 9)']
+seed 11: part 10 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ10', 'lnδ10', 'x(0, 10)', 'x(1, 10)', 'y(0, 10)', 'y(1, 10)'] -> writes into ['lnτ10', 'lnδ10', 'x(0, 10)', 'x(1, 10)', 'y(0, 10)', 'y(1, 10)']
+seed 11: part 11 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ11', 'lnδ11', 'x(1, 11)', 'x(6, 11)', 'y(1, 11)', 'y(6, 11)'] -> writes into ['lnτ11', 'lnδ11', 'x(1, 11)', 'x(6, 11)', 'y(1, 11)', 'y(6, 11)']
+seed 11: part 12 (degree 2): rank 1, eigenvalues nonzero [-2.], M^2 size 2.0e+00
+     acts on ['lnτ12', 'lnδ12', 'x(0, 12)', 'x(3, 12)', 'y(0, 12)', 'y(3, 12)'] -> writes into ['lnτ12', 'lnδ12', 'x(0, 12)', 'x(3, 12)', 'y(0, 12)', 'y(3, 12)']
+seed 11: part 13 (degree 3): rank 1, eigenvalues nonzero [2.5+0.j], M^2 size 2.5e+00
+     acts on ['lnτ13', 'lnδ13', 'x(1, 13)', 'x(6, 13)', 'x(13, 14)', 'y(1, 13)', 'y(6, 13)', 'y(13, 14)'] -> writes into ['lnτ13', 'lnδ13', 'x(1, 13)', 'x(6, 13)', 'x(13, 14)', 'y(1, 13)', 'y(6, 13)', 'y(13, 14)']
+seed 11: part 14 (degree 2): rank 1, eigenvalues nonzero [2.+0.j], M^2 size 2.0e+00
+     acts on ['lnτ14', 'lnδ14', 'x(1, 14)', 'x(13, 14)', 'y(1, 14)', 'y(13, 14)'] -> writes into ['lnτ14', 'lnδ14', 'x(1, 14)', 'x(13, 14)', 'y(1, 14)', 'y(13, 14)']
+seed 11: part 15 (degree 2): rank 1, eigenvalues nonzero [2.], M^2 size 2.0e+00
+     acts on ['lnτ15', 'lnδ15', 'x(5, 15)', 'x(8, 15)', 'y(5, 15)', 'y(8, 15)'] -> writes into ['lnτ15', 'lnδ15', 'x(5, 15)', 'x(8, 15)', 'y(5, 15)', 'y(8, 15)']

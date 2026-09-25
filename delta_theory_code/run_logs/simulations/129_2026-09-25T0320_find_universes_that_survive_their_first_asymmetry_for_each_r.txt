@@ -1,0 +1,12 @@
+Run 129
+Time (UTC): 2026-09-25T03:20:00
+Purpose: Find universes that survive their first asymmetry, for each rule (magnet/scan.py)
+Working directory: scripts/magnet
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/magnet && python3 scan.py absorb; python3 scan.py vanish
+
+=== OUTPUT ===
+absorb surviving seeds: [17, 24, 32, 37]
+vanish surviving seeds: [2, 4, 5, 8]

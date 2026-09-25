@@ -1,0 +1,33 @@
+Run 116
+Time (UTC): 2026-09-24T02:48:47.828947Z
+Purpose: Locate the revised pages and render them for a visual check
+Working directory: scripts/ed3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/ed3 && python3 - << 'EOF'
+from pypdf import PdfReader
+r=PdfReader('delta_theory_mathematics_3rd.pdf')
+for i,p in enumerate(r.pages):
+    t=p.extract_text()
+    for key in ['Ticks and remainders','Ticks, remainders and the matrix','Example: a matrix of clocks','Desynchronisation over the life','What the note changes','Whole units','own time is discrete']:
+        if key in t: print(i+1,key)
+EOF
+pdftoppm -r 55 -png -f 6 -l 6 delta_theory_mathematics_3rd.pdf a; pdftoppm -r 55 -png -f 62 -l 65 delta_theory_mathematics_3rd.pdf b; ls a* b*
+
+=== OUTPUT ===
+5 Ticks, remainders and the matrix
+5 What the note changes
+11 Ticks and remainders
+14 own time is discrete
+60 Ticks, remainders and the matrix
+62 Example: a matrix of clocks
+62 Desynchronisation over the life
+63 What the note changes
+71 Whole units
+78 Whole units
+a-06.png
+b-62.png
+b-63.png
+b-64.png
+b-65.png

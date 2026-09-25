@@ -1,0 +1,31 @@
+Run 103
+Time (UTC): 2026-09-23T22:29:49.638709Z
+Purpose: Confirm that the local transformations only produce waves the other composite can never detect
+Working directory: scripts/composite
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/composite && cat > dark2.py << 'EOF'
+import numpy as np
+from layer import *
+from coupled import build
+from circle_local import local_commutant
+# Whatever a commuting transformation confined to A (plus the joining relation) produces: can B EVER notice it?
+for kind,N in (("triangle",3),("ring",8),("ring",12),("net",12)):
+    n,E,JT,JA,iA,iB,pa,m=build(kind,N,pick=0)
+    basis=local_commutant(JT,iA+[m-1]); rng=np.random.default_rng(3); worstB=0; size=0
+    for B in basis:
+        for _ in range(3):
+            y=B@rng.normal(size=m); size=max(size,np.abs(y).max()); z=y.copy()
+            for t in range(3000):
+                worstB=max(worstB,np.abs(z[iB]).max()); z=JT@z
+    print(f"joined {kind}s of {n}: {len(basis)} commuting local transformations; largest thing they produce {size:.1e}; "
+          f"largest trace of it ever seen in B over 3000 rounds {worstB:.1e}")
+EOF
+timeout 1200 python3 dark2.py
+
+=== OUTPUT ===
+joined triangles of 3: 1 commuting local transformations; largest thing they produce 3.9e-01; largest trace of it ever seen in B over 3000 rounds 3.8e-15
+joined rings of 8: 7 commuting local transformations; largest thing they produce 9.2e-01; largest trace of it ever seen in B over 3000 rounds 3.9e-15
+joined rings of 12: 11 commuting local transformations; largest thing they produce 7.4e-01; largest trace of it ever seen in B over 3000 rounds 9.8e-15
+joined nets of 12: 16 commuting local transformations; largest thing they produce 9.8e-01; largest trace of it ever seen in B over 3000 rounds 1.4e-14

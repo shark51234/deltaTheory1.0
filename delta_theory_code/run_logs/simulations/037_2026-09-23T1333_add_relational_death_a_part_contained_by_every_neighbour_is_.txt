@@ -1,0 +1,60 @@
+Run 037
+Time (UTC): 2026-09-23T13:33:53.990573Z
+Purpose: Add relational death: a part contained by every neighbour is taken in by its strongest registrant
+Working directory: scripts/death
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/death && cp ../causal/causal.py . && python3 - << 'EOF'
+src=open('causal.py').read()
+# 1) count relational deaths separately and add the enclosure check after every event
+src=src.replace("s.c=dict(space=0,time=0,births=0,deaths=0)","s.c=dict(space=0,time=0,births=0,deaths=0,reldeaths=0); s.touched=set()")
+src=src.replace("""    def new(s,t,d):
+        k=s.free.pop(); s.t[k]=t; s.d[k]=d; s.alive[k]=True; s.nb[k]=set(); s.born[k]=s.e; return k""","""    def new(s,t,d):
+        k=s.free.pop(); s.t[k]=t; s.d[k]=d; s.alive[k]=True; s.nb[k]=set(); s.born[k]=s.e; s.touched.add(k); return k
+    def enclosed(s,f):
+        nb=s.nb[f]
+        if not nb: return False
+        return all(s.t[a]>=s.t[f] and s.d[a]>=s.d[f] for a in nb)
+    def relational_death(s):
+        # a part contained by every neighbour can register none of them: it has no perspective of its own
+        queue=set()
+        for k in s.touched:
+            if s.alive[k]: queue.add(k); queue|=s.nb[k]
+        s.touched=set()
+        while queue:
+            f=queue.pop()
+            if not s.alive[f] or not s.enclosed(f): continue
+            a=max(s.nb[f],key=lambda m:s.t[m])          # its strongest registrant takes it in
+            nbrs=set(s.nb[f])
+            s.absorb(a,f); s.c['deaths']-=1; s.c['reldeaths']+=1
+            queue|=nbrs; queue.add(a)""")
+src=src.replace("""        s.e+=1
+    def snap(s):""","""        s.touched|={i,j}
+        if getattr(s,'reldeath',False): s.relational_death()
+        else: s.touched=set()
+        s.e+=1
+    def snap(s):""")
+src=src.replace("""    inertia=len(sys.argv)>4 and sys.argv[4]=='inertia'
+    for seed in seeds:
+        w=World(200,seed,variant); w.inertia=inertia; out=[]""","""    inertia='inertia' in sys.argv[4:]; reldeath='reldeath' in sys.argv[4:]
+    for seed in seeds:
+        w=World(200,seed,variant); w.inertia=inertia; w.reldeath=reldeath; out=[]""")
+src=src.replace("""print(f"[{variant}{'+inertia' if inertia else ''} s{seed}] spacelike share={c['space']/max(tot,1):.2f} births={c['births']} deaths={c['deaths']} median life={np.median(lt):.0f}",flush=True)""","""print(f"[{variant}{'+inertia' if inertia else ''}{'+reldeath' if reldeath else ''} s{seed}] spacelike share={c['space']/max(tot,1):.2f} births={c['births']} deaths={c['deaths']} relational deaths={c['reldeaths']} median life={np.median(lt):.0f}",flush=True)""")
+open('causal.py','w').write(src)
+EOF
+timeout 3000 bash -c 'python3 causal.py oneway 1,2 60000 inertia reldeath 2>/dev/null; python3 causal.py selves 1,2 60000 inertia reldeath 2>/dev/null'
+
+=== OUTPUT ===
+[oneway+inertia+reldeath s1] spacelike share=0.48 births=89 deaths=51 relational deaths=237 median life=34
+    e0: N=200, R=0.060, largest=0.009, top10=0.086, parts>1%=0, span=10^0.28, tail=nan
+    COLLAPSED at e126
+[oneway+inertia+reldeath s2] spacelike share=0.44 births=118 deaths=64 relational deaths=253 median life=28
+    e0: N=200, R=0.049, largest=0.009, top10=0.088, parts>1%=0, span=10^0.29, tail=nan
+    COLLAPSED at e158
+[selves+inertia+reldeath s1] spacelike share=0.47 births=163 deaths=71 relational deaths=291 median life=35
+    e0: N=200, R=0.060, largest=0.009, top10=0.086, parts>1%=0, span=10^0.28, tail=nan
+    COLLAPSED at e200
+[selves+inertia+reldeath s2] spacelike share=0.46 births=166 deaths=53 relational deaths=312 median life=20
+    e0: N=200, R=0.049, largest=0.009, top10=0.088, parts>1%=0, span=10^0.29, tail=nan
+    COLLAPSED at e177

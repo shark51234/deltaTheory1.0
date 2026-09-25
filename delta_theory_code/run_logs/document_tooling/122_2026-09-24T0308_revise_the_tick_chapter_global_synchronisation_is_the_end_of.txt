@@ -1,0 +1,197 @@
+Run 122
+Time (UTC): 2026-09-24T03:08:40.160216Z
+Purpose: Revise the tick chapter: global synchronisation is the end of reality, and vanishing leaves a remainder and disturbs the field
+Working directory: scripts/part3
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude/part3 && cp ticks_chapter.tex ticks_chapter_v1.tex && python3 - << 'PYEOF'
+p='/home/claude/part3/ticks_chapter.tex'; s=open(p).read()
+def rep(old,new):
+    global s
+    assert s.count(old)==1, old[:80]
+    s=s.replace(old,new)
+
+rep(r"""The note leaves free will, and one further question, open; they are outside the mathematics here.""",
+r"""The note leaves free will, and one further question, open; they are outside the mathematics here.
+
+Asked whether (d) describes how a universe must end, the author answered that it does not. Local clocks
+synchronise to $1$ sometimes; if all the clocks synchronised together, reality would cease to exist. A
+particle that vanishes still leaves a remainder for other particles, and the act of vanishing is itself an
+act: from the system's point of view it creates a disturbance in the field.""")
+
+rep(r"""The revised \ref{P:budget} (Chapter~\ref{ch:method}) states them as a postulate. This chapter works out what
+they mean.""",
+r"""The revised \ref{P:budget} (Chapter~\ref{ch:method}) states them, with the author's clarification, as a
+postulate. This chapter works out what they mean.""")
+
+rep(r"""A part's clock runs at $1/\cosh\theta_a$ relative to the whole (Chapter~\ref{ch:minkowski}), so $\rho_a=1$ is
+exactly a clock running at the whole's rate: ``all the clocks synchronise to $1$.'' Theorem~\ref{thm:column}
+says that the note's two closing statements are one statement. The remainders reconstitute $I$ when, and
+only when, the clocks agree, and the motion remainder $R$ measures how far they disagree. From here on $R$
+is also called the \emph{desynchronisation}.""",
+r"""A part's clock runs at $1/\cosh\theta_a$ relative to the whole (Chapter~\ref{ch:minkowski}), so $\rho_a=1$ is
+exactly a clock running at the whole's rate: ``all the clocks synchronise to $1$.'' Theorem~\ref{thm:column}
+says that the note's two closing statements are one statement. The remainders reconstitute $I$ when, and
+only when, all the clocks agree, and the motion remainder $R$ measures how far they disagree. From here on $R$
+is also called the \emph{desynchronisation}.
+
+\begin{corollary}[Reality never closes]\label{cor:noclosure}\Derived{}
+At every moment $R>0$ and $\sum_a\Delta_a<1$.
+\end{corollary}
+\begin{proof}
+$R=0$ would be a real quantity at exact zero, and the whole rebuilt exactly from its parts would be perfect
+closure; \ref{P:limits} forbids both.
+\end{proof}
+This is the author's clarification in mathematical form. All clocks agreeing at once would give back the
+undivided whole, and reality, which is difference, would cease; like each part's ticks, the universe's
+remainders tend toward $I$ and never reach it.""")
+
+rep(r"""\begin{keybox}{Example: a matrix of clocks}
+The whole halves; one half halves again; one quarter halves again. Four parts, all at rest:""",
+r"""\begin{keybox}{Example: a matrix of clocks}
+The whole halves; one half halves again; one quarter halves again. Four parts, all at rest (the limiting
+case of perfect agreement, which a real universe never reaches):""")
+
+rep(r"""\begin{proposition}[Remainders pass on]\label{prop:passon}\Derived{}
+When a clock stops by absorption, the absorbed part's remainder passes to the absorber
+(Corollary~\ref{cor:relational}). The absorber gains $\eta_{ab}-\eta_a\ge\eta_b$
+(Corollary~\ref{cor:reverse}), so the column total rises by exactly the motion converted and $R$ falls by the
+same amount. A birth can move $R$ either way (Proposition~\ref{prop:massmotion}).
+\end{proposition}
+These are the vertical arrows in the remainder column of the note's matrix.""",
+r"""\section{Vanishing as an act}
+
+A local clock completes when its part vanishes: its row closes, ticks plus remainder equal to $1$. In
+Part II a vanishing part was absorbed whole by the part that registered it, silently. The author's
+clarification asks for two things instead: the remainder goes to \emph{other particles}, and the vanishing
+itself disturbs the field. Two principles already derived in Part II fix how.
+
+\begin{definition}[Vanishing]\label{def:vanish}\Chosen{}
+When part $g$ vanishes (the one-way outcome of a timelike encounter, Chapter~\ref{ch:causal}):
+\begin{enumerate}[label=(\roman*)]
+\item its continuity stays: $\tau_g$ goes to the part $k$ that registered the vanishing;
+\item its difference moves: $\delta_g$ spreads over all of $g$'s neighbours $j$, in shares proportional to the
+rate at which each registers it, $e^{\theta_j-\theta_g}$;
+\item its relations pass to $k$, as before.
+\end{enumerate}
+\end{definition}
+Item (i) is ``continuity is what stays'' (\Ch{25}); item (ii) is ``only difference propagates'' (\Ch{8}) with
+the Doppler factor of the activity rule (Theorem~\ref{thm:activity}). The one choice is that the continuity
+stays with the part that registered the vanishing, the containing partner. A part with a single neighbour is
+absorbed exactly as in Part II.
+
+\begin{proposition}[Vanishing disturbs the field]\label{prop:passon}\Derived{}
+Every neighbour of a vanishing part changes its $\eta$, so the vanishing is a tick of every neighbour's clock:
+an act from the system's point of view. The neighbours other than $k$ receive difference without continuity,
+so their rapidities fall: the field around the vanished part is set in motion. Totals are conserved, so the
+whole stays at rest.
+\end{proposition}
+These are the vertical arrows in the remainder column of the note's matrix. Part II tested, and rejected, a
+different sharing: a relationally dead part handed whole to all its neighbours made the universe collapse in
+an avalanche (Chapter~\ref{ch:causal}). Here only the difference spreads, and only at the vanishings the causal
+rule already produces.""")
+
+rep(r"""\section{Does a universe synchronise?}
+
+The note says the remainders sum to $1$ with the clocks synchronised. By Theorem~\ref{thm:column} that
+requires $R\to0$. Part II's universes do not stop, so the test is whether $R$ falls as they age.
+
+\begin{numbox}{Desynchronisation over the life of a universe}
+\Numerical{} Causal event rule with the derived activity rule, 200 starting parts, 400{,}000 events, seven
+seeds, growing to 53{,}000--57{,}000 parts:""",
+r"""\section{What keeps reality open}
+
+Corollary~\ref{cor:noclosure} says $R$ never reaches zero, but a dynamics could still drive it toward zero.
+Part II's universes, with silent absorption, do exactly that.
+
+\begin{numbox}{With silent absorption, the bulk synchronises}
+\Numerical{} Causal event rule with the derived activity rule, 200 starting parts, 400{,}000 events, seven
+seeds, growing to 53{,}000--57{,}000 parts:""")
+
+rep(r"""So the bulk of each universe drifts toward the note's end state: the parts that hold most of the whole come to
+rest relative to it, and the remainders approach $1$. The many small parts do not synchronise with their
+neighbours. Whether a universe whose events eventually cease ends fully synchronised, as the note requires,
+is open. \Open{}""",
+r"""The parts that hold most of the whole come to rest relative to it, and the universe drifts toward the closure
+that would end it. Silent absorption turns motion into mass (Corollary~\ref{cor:reverse}) and nothing turns it
+back fast enough.
+
+\begin{numbox}{With vanishing as an act, desynchronisation settles near one tenth}
+\Numerical{} The same universes with Definition~\ref{def:vanish}, four seeds, to 47{,}000--48{,}000 parts:
+\begin{center}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Seed & 1 & 2 & 3 & 4 \\
+\midrule
+$R$ at start & 0.060 & 0.049 & 0.062 & 0.053 \\
+$R$ at 24{,}000 parts & 0.118 & 0.094 & 0.087 & 0.073 \\
+$R$ at 48{,}000 parts & 0.115 & 0.094 & 0.086 & 0.071 \\
+Largest part & 0.067 & 0.078 & 0.090 & 0.160 \\
+Parts above 1\% & 21 & 21 & 18 & 15 \\
+\bottomrule
+\end{tabular}
+\end{center}
+Each vanishing moved the other neighbours' rapidities by $0.125$--$0.127$ on average. Vanishings were about two
+thirds as frequent as births (115{,}000--119{,}000 against 174{,}000--178{,}000), and no universe collapsed.
+\end{numbox}
+
+$R$ rises to a level and then holds it: a set point between $0.07$ and $0.12$, like the thermostat of
+Chapter~\ref{ch:thermostat}. The disturbances of vanishing parts are what keep the clocks from agreeing.
+Local clocks complete, their parts vanish, and each vanishing sets the field around it moving again; the
+universe as a whole stays open, as Corollary~\ref{cor:noclosure} requires.
+
+\begin{numbox}{Space survives the change}
+\Numerical{} Relation networks at 30{,}000 parts, two seeds each, ball growth from 40 ordinary parts:
+\begin{center}
+\small
+\begin{tabular}{lcc}
+\toprule
+& silent absorption & vanishing as an act \\
+\midrule
+Dimension seen at reach 1, 2, 3, 4, 5 & 1.9--2.0, 2.7--3.1, 4.7--4.8, 5.5--6.2, 5.4--6.4 & 1.9, 2.6--2.7, 4.1--4.2, 4.5--5.3, 4.8--5.2 \\
+Giants (above 1\%); largest & 5--13; 36--44\% & 18--21; 6--8\% \\
+Reachable without the giants & 2.2--2.6\% & 3.9--8.5\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{numbox}
+Space is still a small world held together by giants, with dimension near 2 at short reach and near 4 at three
+steps. The giants are more numerous and much smaller. The horizon and binding analyses of Part II used silent
+absorption and have not been repeated. \Open{}""")
+
+rep(r"""\begin{plainwords}
+Each part's clock ticks only when it changes, by giving part of itself away or taking another part in, never
+when it merely trades motion. Counted from the whole, its ticks add up to almost everything, and what they
+never cover is what the part still is. Add those leftovers over all parts and you get the whole back exactly
+when every clock runs at the whole's rate. Real universes move toward that: the motion they hold keeps
+falling as they age.
+\end{plainwords}""",
+r"""\begin{plainwords}
+Each part's clock ticks only when it changes, by giving part of itself away or taking another part in, never
+when it merely trades motion. Counted from the whole, its ticks add up to almost everything, and what they
+never cover is what the part still is. When a part's clock completes, the part vanishes, but what it still was
+goes to the parts around it, and the vanishing jolts them into motion. If every clock completed together,
+the leftovers would add up to the whole and reality would end; the jolts of vanishing parts are what keep that
+from happening.
+\end{plainwords}""")
+
+rep(r"""\ref{P:budget} & Now the tick postulate: steps of $\eta$ are ticks, the sum tends to $I$ and never reaches it, a remainder is left, tick times are random and set by the environment, and remainders reconstitute $I$ when clocks agree. \\""",
+r"""\ref{P:budget} & Now the tick postulate: steps of $\eta$ are ticks, the sum tends to $I$ and never reaches it, a remainder is left for other parts, tick times are random and set by the environment; all clocks agreeing would end reality. \\""")
+rep(r"""Corollary~\ref{cor:frozen} & A part with no events has a stopped clock and keeps its remainder. \\""",
+r"""Corollary~\ref{cor:frozen} & A part with no events has a stopped clock and keeps its remainder. \\
+Corollary~\ref{cor:relational}; causal rule & A vanishing part leaves its remainder to its neighbours and disturbs the field (Definition~\ref{def:vanish}). \\""")
+rep(r"""Theorems~\ref{thm:partsum}, \ref{thm:remainder} & The participant sum is the remainder column; $R$ is the desynchronisation. \\""",
+r"""Theorems~\ref{thm:partsum}, \ref{thm:remainder} & The participant sum is the remainder column; $R$ is the desynchronisation, and $R>0$ always (Corollary~\ref{cor:noclosure}). \\""")
+rep(r"""Every result of Parts I and II survives. What changed is what a step of time is, what the budget is, and what
+the remainder of Theorem~\ref{thm:remainder} means; and the postulate count returns to seven.""",
+r"""Every derivation of Parts I and II survives. What changed is what a step of time is, what the budget is, what
+the remainder of Theorem~\ref{thm:remainder} means, and what happens when a part vanishes; the postulate count
+returns to seven. The numerical results of Part II were obtained with silent absorption; those rechecked under
+vanishing (space, giants as hubs, no collapse) hold, and the rest are marked open.""")
+open(p,'w').write(s); print("ok")
+PYEOF
+
+=== OUTPUT ===
+ok

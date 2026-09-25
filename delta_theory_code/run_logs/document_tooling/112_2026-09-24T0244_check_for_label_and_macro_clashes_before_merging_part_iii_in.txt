@@ -1,0 +1,56 @@
+Run 112
+Time (UTC): 2026-09-24T02:44:58.183128Z
+Purpose: Check for label and macro clashes before merging Part III into the main document
+Working directory: (see command)
+Note: paths under /home/claude/<dir> correspond to scripts/<dir> in this package.
+
+=== COMMAND ===
+cd /home/claude && python3 - << 'EOF'
+import re
+a=open('/mnt/user-data/outputs/delta_theory_mathematics.tex').read()
+b=open('/home/claude/part3/delta_theory_part3.tex').read()
+la=set(re.findall(r'\\label\{([^}]*)\}',a)); lb=set(re.findall(r'\\label\{([^}]*)\}',b))
+print("clashes:",la&lb)
+print("main newcommands:",re.findall(r'\\newcommand\{(\\[A-Za-z]+)\}',a))
+print("part3 newcommands:",re.findall(r'\\newcommand\{(\\[A-Za-z]+)\}',b))
+print("main postulate count:",len(re.findall(r'\\begin\{postulate\}',a)))
+for key in ['\\Ch{17}','delay2','prop:delay2']:
+    print(key, a.count(key))
+EOF
+grep -n "prop:delay2" -A12 /mnt/user-data/outputs/delta_theory_mathematics.tex | head -30
+
+=== OUTPUT ===
+clashes: set()
+main newcommands: ['\\Derived', '\\Chosen', '\\Numerical', '\\Open', '\\eps', '\\half', '\\Ch']
+part3 newcommands: ['\\Derived', '\\Chosen', '\\Numerical', '\\Open', '\\Postulated', '\\eps', '\\half', '\\Ch', '\\PI', '\\PII']
+main postulate count: 7
+\Ch{17} 4
+delay2 2
+prop:delay2 2
+810:\begin{proposition}[Delay in the smallest universe]\label{prop:delay2} \Derived{}
+811-For two parts with a one-step delay, $x_{n+1}=y_{n-1}$ and $y_{n+1}=y_n+x_n-y_{n-1}$. Hence
+812-$y_{n+1}=y_n-y_{n-1}+y_{n-2}$, whose characteristic polynomial factors as
+813-$(\lambda-1)(\lambda^2+1)$. Every solution is bounded with period four, and $\eta$ alternates between two
+814-values.
+815-\end{proposition}
+816-
+817-\begin{numbox}{Explicit delay among many parts \hfill{\footnotesize[numerical]}}
+818-Sixty parts, random pairing each round, one-round delay. After ten rounds, 26 of the 120 continuity and
+819-difference values were negative, and by round 100 the totals had diverged. An explicit delay on top of
+820-exchange breaks \ref{P:limits}, so it is rejected: the chain structure already is the latency.
+821-\end{numbox}
+822-
+--
+2024:  hint is the $\pm i$ produced by latency in the two-part universe (Proposition~\ref{prop:delay2}).
+2025-  \item \textbf{Gauge groups.} Records give the boost group; known forces need U(1), SU(2), SU(3).
+2026-  \item \textbf{Three-dimensional locality.} The network is small-world; its dimension depends on reach.
+2027-  Whether the horizon dimension settles (and where) needs larger universes.
+2028-  \item \textbf{The second kind of light.} Residues split into pure difference and pure continuity; the
+2029-  philosophy names only the first.
+2030-  \item \textbf{Light and Axiom~1.} Light sits at an exact null direction.
+2031-  \item \textbf{The budget.} The derived life sum is $2\eta_0$; the working notes say $I$.
+2032-  \item \textbf{Strict clocks.} One encounter per tick for both parties has not been tested.
+2033-  \item \textbf{Identity of structures.} Structure persistence should be checked against a random baseline.
+2034-  \item \textbf{Numbers.} No mass, coupling or ratio of nature has been produced.
+2035-\end{enumerate}
+2036-
